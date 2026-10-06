@@ -23,8 +23,11 @@ function PreviewContent() {
 /** Sticky phone preview for desktop (lg+). */
 export function DesktopPreview() {
   return (
-    <aside aria-label="Live preview" className="sticky top-24 hidden lg:block">
-      <PhoneFrame>
+    <aside aria-label="Live preview" className="sticky top-36 hidden self-start lg:block">
+      <p className="mb-4 text-center text-xs font-medium tracking-[0.14em] text-muted-foreground uppercase">
+        Live preview
+      </p>
+      <PhoneFrame className="w-full xl:w-full">
         <PreviewContent />
       </PhoneFrame>
     </aside>
@@ -38,7 +41,7 @@ export function MobilePreview() {
       <DialogTrigger asChild>
         <Button
           size="lg"
-          className="fixed bottom-5 left-1/2 z-40 -translate-x-1/2 rounded-full px-5 shadow-lg lg:hidden"
+          className="fixed bottom-5 left-1/2 z-40 -translate-x-1/2 rounded-full bg-ink px-5 text-paper shadow-[0_10px_30px_-10px_rgba(27,26,23,0.6)] hover:bg-ink/90 lg:hidden"
         >
           <Eye aria-hidden />
           Preview

@@ -12,9 +12,9 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
 
   return (
     <>
-      <div className="mb-6 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight">Welcome back</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Log in to manage your LinkHub page.</p>
+      <div className="mb-8">
+        <h1 className="font-display text-5xl leading-none tracking-[-0.01em]">Welcome back</h1>
+        <p className="mt-3 text-muted-foreground">Log in to manage your page.</p>
       </div>
       {error && (
         <div

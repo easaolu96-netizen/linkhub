@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { MailCheck } from "lucide-react";
 import { toast } from "sonner";
 import { resendEmailCode, verifyEmailCode } from "@/app/auth/actions";
 import { Button } from "@/components/ui/button";
@@ -62,13 +61,10 @@ export function EmailCodeStep({
   }
 
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex flex-col items-center gap-3 text-center">
-        <span className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
-          <MailCheck className="size-6" aria-hidden />
-        </span>
-        <h2 className="text-lg font-semibold">Check your email</h2>
-        <p className="text-sm text-muted-foreground" role="status">
+    <div className="flex flex-col gap-7">
+      <div>
+        <h2 className="font-display text-3xl leading-none">Check your email</h2>
+        <p className="mt-3 text-muted-foreground" role="status">
           We sent a code to <span className="font-medium break-all text-foreground">{email}</span>. Enter it
           below to confirm your account.
         </p>
@@ -104,12 +100,12 @@ export function EmailCodeStep({
         </Button>
       </form>
 
-      <div className="flex flex-col items-center gap-1 text-sm">
-        <Button variant="link" size="sm" onClick={onResend} disabled={cooldown > 0 || isResending}>
+      <div className="flex items-center justify-between gap-2 border-t pt-4 text-sm">
+        <Button variant="link" size="sm" className="px-0" onClick={onResend} disabled={cooldown > 0 || isResending}>
           {isResending && <Spinner />}
           {cooldown > 0 ? `Resend code in ${cooldown}s` : "Resend code"}
         </Button>
-        <Button variant="link" size="sm" className="text-muted-foreground" onClick={onBack}>
+        <Button variant="link" size="sm" className="px-0 text-muted-foreground" onClick={onBack}>
           Use a different email
         </Button>
       </div>

@@ -18,7 +18,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { Link2, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useDashboard } from "@/components/dashboard/dashboard-provider";
 import { AddLinkForm } from "@/components/dashboard/links/add-link-form";
@@ -62,25 +62,18 @@ export function LinksEditor() {
       {adding ? (
         <AddLinkForm onDone={() => setAdding(false)} />
       ) : (
-        <Button size="lg" className="h-12 w-full rounded-full text-base" onClick={() => setAdding(true)}>
+        <Button size="lg" className="h-12 w-full rounded-xl text-[15px]" onClick={() => setAdding(true)}>
           <Plus aria-hidden />
           Add link
         </Button>
       )}
 
       {links.length === 0 && !adding ? (
-        <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed bg-card px-6 py-12 text-center">
-          <span className="flex size-12 items-center justify-center rounded-full bg-muted">
-            <Link2 className="size-6 text-muted-foreground" aria-hidden />
-          </span>
-          <h2 className="font-semibold">Add your first link</h2>
-          <p className="max-w-xs text-sm text-muted-foreground">
-            Share your website, socials, latest video — anything. Drag to reorder them any time.
+        <div className="rounded-xl border border-dashed border-input px-6 py-14 text-center">
+          <h2 className="font-display text-3xl">Add your first link</h2>
+          <p className="mx-auto mt-2 max-w-xs text-sm text-muted-foreground">
+            Your website, socials, latest video — anything. You can reorder them any time.
           </p>
-          <Button variant="outline" onClick={() => setAdding(true)}>
-            <Plus aria-hidden />
-            Add your first link
-          </Button>
         </div>
       ) : (
         <DndContext

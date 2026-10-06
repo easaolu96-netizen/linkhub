@@ -1,20 +1,31 @@
 import { ImageResponse } from "next/og";
+import { displayFonts } from "@/lib/og-fonts";
 
 export const size = { width: 180, height: 180 };
 export const contentType = "image/png";
 
-/** Home-screen icon for iOS. */
-export default function AppleIcon() {
+/** Home-screen icon for iOS: "lh." from the wordmark, on ink. */
+export default async function AppleIcon() {
   return new ImageResponse(
     (
-      <div style={{ display: "flex", width: "100%", height: "100%", alignItems: "center", justifyContent: "center", background: "#111111" }}>
-        <svg width="112" height="112" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M9 17H7A5 5 0 0 1 7 7h2" />
-          <path d="M15 7h2a5 5 0 1 1 0 10h-2" />
-          <line x1="8" x2="16" y1="12" y2="12" />
-        </svg>
+      <div
+        style={{
+          display: "flex",
+          width: "100%",
+          height: "100%",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "#1b1a17",
+          color: "#f6f4ef",
+          fontFamily: "Instrument Serif",
+          fontSize: 112,
+          lineHeight: 1,
+          paddingBottom: 14,
+        }}
+      >
+        lh<span style={{ color: "#5fa98a" }}>.</span>
       </div>
     ),
-    size,
+    { ...size, fonts: await displayFonts() },
   );
 }

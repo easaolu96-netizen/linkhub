@@ -45,7 +45,7 @@ export function AddLinkForm({ onDone }: { onDone: () => void }) {
     <form
       onSubmit={form.handleSubmit(onSubmit)}
       noValidate
-      className="rounded-2xl border bg-card p-4 shadow-sm sm:p-5"
+      className="rounded-xl border bg-surface p-5"
       aria-label="Add a new link"
     >
       <FieldGroup className="gap-4">

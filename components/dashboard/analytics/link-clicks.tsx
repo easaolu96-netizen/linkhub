@@ -2,7 +2,7 @@ import { EyeOff } from "lucide-react";
 import type { LinkStat } from "@/lib/analytics-data";
 
 /**
- * Clicks per link as horizontal bars (single series → single hue, no legend).
+ * Clicks per link as horizontal bars (single series → the brand green, no legend).
  * Plain HTML: the value sits at the bar tip, so nothing depends on hover.
  */
 export function LinkClicks({ links }: { links: LinkStat[] }) {
@@ -30,7 +30,7 @@ export function LinkClicks({ links }: { links: LinkStat[] }) {
                 <span
                   aria-hidden
                   className="absolute inset-y-0 left-0 rounded-r-[4px]"
-                  style={{ width: `${Math.max(1.5, (link.clicks / max) * 100)}%`, backgroundColor: "#2a78d6" }}
+                  style={{ width: `${Math.max(1.5, (link.clicks / max) * 100)}%`, backgroundColor: "var(--green)" }}
                 />
               )}
             </span>

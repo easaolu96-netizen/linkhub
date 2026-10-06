@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { BarChart3, MousePointerClick, Palette } from "lucide-react";
+import { LinkClicks } from "@/components/dashboard/analytics/link-clicks";
 import { ClaimForm } from "@/components/landing/claim-form";
 import { DeletedNotice } from "@/components/landing/deleted-notice";
 import { Logo } from "@/components/logo";
@@ -8,50 +8,69 @@ import { PhoneFrame } from "@/components/profile/phone-frame";
 import { ProfileView } from "@/components/profile/profile-view";
 import { Button } from "@/components/ui/button";
 import { SITE_URL } from "@/lib/env";
-import { presetTheme } from "@/lib/theme";
+import { presetTheme, type PresetKey } from "@/lib/theme";
 import type { ProfileData, ProfileLink } from "@/lib/types";
 
 const HOST = new URL(SITE_URL).host;
 
-const DEMO_PROFILE: ProfileData = {
-  id: "demo",
-  username: "alexrivera",
-  display_name: "Alex Rivera",
-  bio: "Travel filmmaker 🎥 Sharing gear, guides and stories from 40+ countries.",
-  avatar_url: null,
-  theme: presetTheme("gradient"),
-  socials: {
-    instagram: "https://instagram.com/alexrivera",
-    youtube: "https://www.youtube.com/@alexrivera",
-    tiktok: "https://www.tiktok.com/@alexrivera",
-    email: "mailto:hello@example.com",
-  },
+function demoProfile(
+  username: string,
+  name: string,
+  bio: string,
+  preset: PresetKey,
+  socials: ProfileData["socials"] = {},
+): ProfileData {
+  return { id: username, username, display_name: name, bio, avatar_url: null, theme: presetTheme(preset), socials };
+}
+
+const links = (...titles: string[]): ProfileLink[] =>
+  titles.map((title, i) => ({ id: String(i), title, url: "https://example.com" }));
+
+const HERO = {
+  profile: demoProfile(
+    "amaraokafor",
+    "Amara Okafor",
+    "Ceramic artist in Lagos. Small-batch pieces and workshops.",
+    "forest",
+    {
+      instagram: "https://instagram.com/x",
+      tiktok: "https://www.tiktok.com/@x",
+      email: "mailto:hello@example.com",
+    },
+  ),
+  links: links("Shop the autumn collection", "Book a wheel-throwing class", "Studio journal", "Commissions"),
 };
 
-const DEMO_LINKS: ProfileLink[] = [
-  { id: "1", title: "▶ Latest video: 30 days in Japan", url: "https://example.com" },
-  { id: "2", title: "My camera gear", url: "https://example.com" },
-  { id: "3", title: "Free travel planning guide", url: "https://example.com" },
-  { id: "4", title: "Work with me", url: "https://example.com" },
+const THEME_SAMPLES = [
+  { profile: demoProfile("tunde", "Tunde Bakare", "Producer. New EP out Friday.", "bold"), links: links("Listen on Spotify", "Tour dates", "Merch") },
+  { profile: demoProfile("lena", "Lena Hart", "Illustrator & picture-book maker.", "pastel"), links: links("Portfolio", "Prints shop", "Newsletter") },
+  { profile: demoProfile("devon", "Devon Lee", "Writing about type and the web.", "minimal"), links: links("Latest essay", "Talks", "Contact") },
+  { profile: demoProfile("noor", "Noor Haddad", "Coffee roaster. Ships nationwide.", "dark"), links: links("Order beans", "Brew guides", "Visit the café") },
 ];
 
-const FEATURES = [
+const STEPS = [
   {
-    icon: MousePointerClick,
-    title: "Edit with a live preview",
-    body: "Add, reorder and hide links with drag-and-drop. Every change shows up on a phone preview instantly.",
+    title: "Claim your name",
+    body: "Pick a short username. Your page lives at one clean address you can put anywhere.",
   },
   {
-    icon: Palette,
-    title: "Make it unmistakably yours",
-    body: "Start from a polished theme, then pick your colours, button style and font. Add your socials in seconds.",
+    title: "Add what matters",
+    body: "Paste your links, drag them into order and hide the ones that are out of season. Every change shows in a live preview.",
   },
   {
-    icon: BarChart3,
-    title: "See what's working",
-    body: "Track page views and link clicks over the last 7 or 30 days, and find out which links people love.",
+    title: "Share and learn",
+    body: "Put the link in your bio. See how many people visit, what they tap and where they come from.",
   },
 ];
+
+const DEMO_STATS = [
+  { id: "a", title: "Shop the autumn collection", isVisible: true, clicks: 412 },
+  { id: "b", title: "Book a wheel-throwing class", isVisible: true, clicks: 268 },
+  { id: "c", title: "Studio journal", isVisible: true, clicks: 97 },
+  { id: "d", title: "Commissions", isVisible: true, clicks: 41 },
+];
+
+const container = "mx-auto w-full max-w-6xl px-5 sm:px-8";
 
 export default function Home() {
   return (
@@ -60,107 +79,145 @@ export default function Home() {
         <DeletedNotice />
       </Suspense>
 
-      <header className="sticky top-0 z-30 border-b border-transparent bg-background/80 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
-          <Logo />
-          <nav aria-label="Account" className="flex items-center gap-2">
-            <Button asChild variant="ghost">
-              <Link href="/login">Log in</Link>
-            </Button>
-            <Button asChild className="rounded-full">
-              <Link href="/signup">Sign up free</Link>
-            </Button>
-          </nav>
-        </div>
+      <header className={`${container} flex h-20 items-center justify-between`}>
+        <Logo />
+        <nav aria-label="Account" className="flex items-center gap-1 sm:gap-2">
+          <Button asChild variant="ghost">
+            <Link href="/login">Log in</Link>
+          </Button>
+          <Button asChild>
+            <Link href="/signup">Get started</Link>
+          </Button>
+        </nav>
       </header>
 
       <main id="main" tabIndex={-1} className="flex-1">
         {/* Hero */}
-        <section className="relative overflow-hidden">
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-x-0 -top-40 -z-10 h-[36rem] bg-[radial-gradient(ellipse_at_top,rgba(199,210,254,0.55),transparent_60%)]"
-          />
-          <div className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)] items-center gap-12 px-4 pt-12 pb-20 sm:px-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:pt-20 lg:pb-28">
-            <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
-              <p className="mb-4 rounded-full border bg-background/70 px-3 py-1 text-sm text-muted-foreground">
-                Free forever · No credit card
-              </p>
-              <h1 className="text-4xl font-bold tracking-tight text-balance sm:text-5xl lg:text-6xl">
-                Everything you are. <span className="text-indigo-600">One simple link.</span>
-              </h1>
-              <p className="mt-5 max-w-xl text-lg text-pretty text-muted-foreground">
-                Put all your content, socials and shops on a single beautiful page. Share it in your
-                bio and watch the clicks roll in.
-              </p>
-              <div className="mt-8 w-full max-w-xl">
-                <ClaimForm host={HOST} />
-              </div>
+        <section className={`${container} grid grid-cols-[minmax(0,1fr)] items-center gap-14 pt-10 pb-24 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] lg:gap-10 lg:pt-16 lg:pb-32`}>
+          <div>
+            <h1 className="font-display text-[3.25rem] leading-[0.95] tracking-[-0.02em] text-balance sm:text-7xl lg:text-[5.5rem]">
+              One link for everything you <em className="text-green">make</em>.
+            </h1>
+            <p className="mt-6 max-w-md text-lg leading-relaxed text-ink-soft">
+              A calm, fast page for your bio. Add your links, choose a look, and see what people tap.
+            </p>
+            <div className="mt-9">
+              <ClaimForm host={HOST} />
             </div>
+          </div>
 
-            <div className="relative mx-auto" aria-label="Example LinkHub page" role="img">
-              <div
-                aria-hidden
-                className="absolute -inset-8 -z-10 rounded-full bg-gradient-to-tr from-indigo-300/40 via-fuchsia-300/30 to-transparent blur-3xl"
-              />
-              <PhoneFrame className="w-[260px] rotate-2 sm:w-[290px]" scrollable={false}>
-                <ProfileView profile={DEMO_PROFILE} links={DEMO_LINKS} mode="preview" />
-              </PhoneFrame>
-            </div>
+          <div className="flex justify-center lg:justify-end" role="img" aria-label="An example LinkHub page">
+            <PhoneFrame className="w-[270px] shadow-[0_30px_60px_-30px_rgba(27,26,23,0.45)] sm:w-[290px]" scrollable={false}>
+              <ProfileView profile={HERO.profile} links={HERO.links} mode="preview" />
+            </PhoneFrame>
           </div>
         </section>
 
-        {/* Features */}
-        <section aria-labelledby="features-heading" className="border-t bg-muted/40">
-          <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
-            <h2 id="features-heading" className="text-center text-3xl font-bold tracking-tight text-balance">
-              Built for creators, small businesses and everyone in between
+        {/* How it works */}
+        <section aria-labelledby="steps-heading" className="border-t">
+          <div className={`${container} py-20 lg:py-28`}>
+            <h2 id="steps-heading" className="max-w-xl font-display text-4xl leading-[1.05] tracking-[-0.01em] sm:text-5xl">
+              From sign-up to shareable in three steps.
             </h2>
-            <ul className="mt-12 grid gap-6 md:grid-cols-3">
-              {FEATURES.map(({ icon: Icon, title, body }) => (
-                <li key={title} className="rounded-2xl border bg-card p-6 shadow-xs">
-                  <span className="flex size-11 items-center justify-center rounded-xl bg-indigo-100 text-indigo-700">
-                    <Icon className="size-5" aria-hidden />
+            <ol className="mt-14 grid gap-10 md:grid-cols-3 md:gap-0 md:divide-x">
+              {STEPS.map((step, i) => (
+                <li key={step.title} className="md:px-8 md:first:pl-0 md:last:pr-0">
+                  <span className="font-display text-2xl text-green" aria-hidden>
+                    {String(i + 1).padStart(2, "0")}
                   </span>
-                  <h3 className="mt-4 text-lg font-semibold">{title}</h3>
-                  <p className="mt-2 text-muted-foreground">{body}</p>
+                  <h3 className="mt-3 text-lg font-medium">{step.title}</h3>
+                  <p className="mt-2 leading-relaxed text-muted-foreground">{step.body}</p>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
+
+        {/* Themes */}
+        <section aria-labelledby="themes-heading" className="border-t bg-surface">
+          <div className={`${container} py-20 lg:py-28`}>
+            <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-end">
+              <h2 id="themes-heading" className="font-display text-4xl leading-[1.05] tracking-[-0.01em] sm:text-5xl">
+                Make it look like you.
+              </h2>
+              <p className="max-w-md text-lg leading-relaxed text-muted-foreground lg:justify-self-end">
+                Start from a considered theme, then adjust colours, buttons and type until it feels right.
+              </p>
+            </div>
+            {/* Scrolls sideways on small screens, so it must be keyboard-focusable. */}
+            <ul
+              tabIndex={0}
+              className="-mx-5 mt-14 flex snap-x snap-mandatory gap-5 overflow-x-auto px-5 pb-2 outline-none [scrollbar-width:none] focus-visible:ring-3 focus-visible:ring-ring/25 sm:-mx-8 sm:px-8 lg:mx-0 lg:grid lg:grid-cols-4 lg:overflow-visible lg:px-0"
+              aria-label="Example themes"
+            >
+              {THEME_SAMPLES.map((sample) => (
+                <li key={sample.profile.username} className="shrink-0 snap-center">
+                  <PhoneFrame className="w-[230px] border-[8px] lg:w-full xl:w-full" scrollable={false} label={`${sample.profile.display_name} example`}>
+                    <ProfileView profile={sample.profile} links={sample.links} mode="preview" />
+                  </PhoneFrame>
                 </li>
               ))}
             </ul>
           </div>
         </section>
 
-        {/* Final call to action */}
-        <section aria-labelledby="cta-heading">
-          <div className="mx-auto flex max-w-6xl flex-col items-center px-4 py-20 text-center sm:px-6">
-            <h2 id="cta-heading" className="text-3xl font-bold tracking-tight text-balance">
-              Your link is waiting
-            </h2>
-            <p className="mt-3 max-w-md text-muted-foreground">
-              Claim your username before someone else does. It takes less than a minute.
-            </p>
-            <div className="mt-8 flex w-full justify-center">
-              <ClaimForm host={HOST} id="claim-bottom" />
+        {/* Analytics */}
+        <section aria-labelledby="analytics-heading" className="border-t">
+          <div className={`${container} grid grid-cols-[minmax(0,1fr)] gap-14 py-20 lg:grid-cols-2 lg:items-center lg:py-28`}>
+            <div>
+              <h2 id="analytics-heading" className="font-display text-4xl leading-[1.05] tracking-[-0.01em] sm:text-5xl">
+                See what people actually tap.
+              </h2>
+              <p className="mt-5 max-w-md text-lg leading-relaxed text-muted-foreground">
+                Views, clicks and click-through rate for the last week or month. Bots and your own visits
+                are left out, so the numbers mean something.
+              </p>
             </div>
+            <figure className="rounded-2xl border bg-surface p-6 sm:p-8">
+              <dl className="grid grid-cols-3 gap-4 border-b pb-6">
+                {[
+                  ["Views", "2,184"],
+                  ["Clicks", "818"],
+                  ["Click-through", "37%"],
+                ].map(([label, value]) => (
+                  <div key={label}>
+                    <dt className="text-sm text-muted-foreground">{label}</dt>
+                    <dd className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">{value}</dd>
+                  </div>
+                ))}
+              </dl>
+              <figcaption className="mt-6 mb-4 text-sm font-medium">Clicks per link · last 30 days</figcaption>
+              <LinkClicks links={DEMO_STATS} />
+            </figure>
+          </div>
+        </section>
+
+        {/* Closing call to action */}
+        <section className="border-t bg-ink text-paper">
+          <div className={`${container} flex flex-col items-start gap-8 py-20 sm:flex-row sm:items-end sm:justify-between lg:py-24`}>
+            <h2 className="max-w-2xl font-display text-4xl leading-[1.05] tracking-[-0.01em] sm:text-6xl">
+              Your name is probably still free.
+            </h2>
+            <Button asChild size="lg" className="bg-paper text-ink hover:bg-paper/90">
+              <Link href="/signup">Claim your link</Link>
+            </Button>
           </div>
         </section>
       </main>
 
-      <footer className="border-t">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 py-8 text-sm text-muted-foreground sm:flex-row sm:px-6">
-          <div className="flex items-center gap-3">
-            <Logo className="text-base text-foreground" />
-            <span>© {new Date().getFullYear()}</span>
-          </div>
-          <nav aria-label="Footer" className="flex gap-5">
-            <Link href="/login" className="hover:text-foreground">
-              Log in
-            </Link>
-            <Link href="/signup" className="hover:text-foreground">
-              Sign up
-            </Link>
-          </nav>
+      <footer className={`${container} flex flex-col gap-4 py-10 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between`}>
+        <div className="flex items-baseline gap-4">
+          <Logo className="text-xl" />
+          <span>© {new Date().getFullYear()}</span>
         </div>
+        <nav aria-label="Footer" className="flex gap-6">
+          <Link href="/login" className="hover:text-foreground">
+            Log in
+          </Link>
+          <Link href="/signup" className="hover:text-foreground">
+            Sign up
+          </Link>
+        </nav>
       </footer>
     </>
   );

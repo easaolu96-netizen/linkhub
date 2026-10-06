@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Inter, Playfair_Display, Poppins, Space_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Instrument_Serif, Inter, Playfair_Display, Poppins, Space_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
@@ -12,6 +12,14 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+});
+
+// Display serif for LinkHub's own headlines (editorial look).
+const instrumentSerif = Instrument_Serif({
+  variable: "--font-instrument-serif",
+  subsets: ["latin"],
+  weight: "400",
+  style: ["normal", "italic"],
 });
 
 // Profile theme fonts (Appearance tab). Not preloaded: the browser only
@@ -42,7 +50,7 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
-  const fontVariables = [geistSans, geistMono, inter, poppins, playfair, spaceMono]
+  const fontVariables = [geistSans, geistMono, instrumentSerif, inter, poppins, playfair, spaceMono]
     .map((font) => font.variable)
     .join(" ");
 

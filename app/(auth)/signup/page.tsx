@@ -12,13 +12,17 @@ export default async function SignupPage({ searchParams }: PageProps<"/signup">)
 
   return (
     <>
-      <div className="mb-6 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {claimed ? `Claim @${claimed}` : "Create your LinkHub"}
+      <div className="mb-8">
+        <h1 className="font-display text-5xl leading-none tracking-[-0.01em] break-words">
+          {claimed ? (
+            <>
+              Claim <span className="text-green">@{claimed}</span>
+            </>
+          ) : (
+            "Create your page"
+          )}
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          One link for everything you share. Free forever.
-        </p>
+        <p className="mt-3 text-muted-foreground">It&apos;s free and takes about a minute.</p>
       </div>
       <AuthForm mode="signup" next={next} />
     </>

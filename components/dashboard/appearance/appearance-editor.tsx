@@ -5,6 +5,7 @@ import { AlertTriangle, Check, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { ColorField } from "@/components/dashboard/appearance/color-field";
 import { useDashboard } from "@/components/dashboard/dashboard-provider";
+import { Section } from "@/components/dashboard/page-header";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { saveTheme } from "@/lib/actions/theme";
@@ -56,8 +57,8 @@ function ChoiceGroup<T extends string>({
             aria-pressed={selected}
             onClick={() => onChange(option)}
             className={cn(
-              "rounded-xl border-2 bg-card text-left outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring/50",
-              selected ? "border-foreground" : "border-transparent ring-1 ring-border hover:ring-foreground/30",
+              "rounded-xl border-2 bg-surface text-left outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring/50",
+              selected ? "border-ink" : "border-transparent ring-1 ring-border hover:ring-ink/30",
             )}
           >
             {renderOption(option, selected)}
@@ -65,15 +66,6 @@ function ChoiceGroup<T extends string>({
         );
       })}
     </div>
-  );
-}
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section className="rounded-2xl border bg-card p-5 sm:p-6">
-      <h2 className="mb-4 font-semibold">{title}</h2>
-      {children}
-    </section>
   );
 }
 
@@ -130,8 +122,8 @@ export function AppearanceEditor() {
   ].filter(Boolean) as string[];
 
   return (
-    <div className="flex flex-col gap-6">
-      <Section title="Themes">
+    <div className="flex flex-col">
+      <Section id="themes-heading" title="Themes">
         <ChoiceGroup
           label="Theme presets"
           options={PRESET_KEYS}
@@ -181,7 +173,7 @@ export function AppearanceEditor() {
         )}
       </Section>
 
-      <Section title="Background">
+      <Section id="background-heading" title="Background">
         <ChoiceGroup
           label="Background type"
           options={["solid", "gradient"] as const}
@@ -216,7 +208,7 @@ export function AppearanceEditor() {
         </div>
       </Section>
 
-      <Section title="Buttons">
+      <Section id="buttons-heading" title="Buttons">
         <ChoiceGroup
           label="Button style"
           options={BUTTON_STYLES}
@@ -258,7 +250,7 @@ export function AppearanceEditor() {
         </div>
       </Section>
 
-      <Section title="Font">
+      <Section id="font-heading" title="Font">
         <ChoiceGroup
           label="Font"
           options={FONTS}

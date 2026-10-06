@@ -82,7 +82,7 @@ async function main() {
     .update({
       username: USERNAME,
       display_name: "Demo Creator",
-      bio: "Photographer & storyteller 📸 Sharing my favourite gear, guides and latest projects.",
+      bio: "Photographer and storyteller. Sharing my favourite gear, guides and latest projects.",
       socials: {
         instagram: "https://instagram.com/linkhubdemo",
         youtube: "https://www.youtube.com/@linkhubdemo",
@@ -91,15 +91,15 @@ async function main() {
         email: "mailto:hello@example.com",
       },
       theme: {
-        preset: "gradient",
-        backgroundType: "gradient",
-        background: "#4f46e5",
-        backgroundTo: "#db2777",
-        textColor: "#ffffff",
-        buttonStyle: "pill",
-        buttonColor: "#ffffff",
-        buttonTextColor: "#3730a3",
-        font: "poppins",
+        preset: "elegant",
+        backgroundType: "solid",
+        background: "#f5f0e8",
+        backgroundTo: "#e7dcc8",
+        textColor: "#3f2d20",
+        buttonStyle: "filled",
+        buttonColor: "#3f2d20",
+        buttonTextColor: "#f5f0e8",
+        font: "playfair",
       },
     })
     .eq("id", userId);
@@ -107,7 +107,7 @@ async function main() {
 
   // 4. Links (every row lists every column — see README "bulk insert" note).
   const linkSeeds = [
-    { title: "📷 My latest photo series", url: "https://example.com/series", weight: 5, is_visible: true },
+    { title: "My latest photo series", url: "https://example.com/series", weight: 5, is_visible: true },
     { title: "My camera gear", url: "https://example.com/gear", weight: 3, is_visible: true },
     { title: "Free editing presets", url: "https://example.com/presets", weight: 4, is_visible: true },
     { title: "Book a photoshoot", url: "https://example.com/book", weight: 2, is_visible: true },

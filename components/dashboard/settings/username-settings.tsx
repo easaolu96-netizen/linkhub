@@ -34,7 +34,7 @@ export function UsernameSettings({ prefix }: { prefix: string }) {
 
   return (
     <form onSubmit={onSubmit} noValidate className="flex flex-col gap-3">
-      <Label htmlFor="settings-username">Username</Label>
+      <Label htmlFor="settings-username" className="sr-only">Username</Label>
       <UsernameField
         id="settings-username"
         value={value}

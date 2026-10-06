@@ -20,20 +20,20 @@ export default async function OnboardingPage({ searchParams }: PageProps<"/onboa
   const suggestion = requested || suggestUsername(profile?.display_name) || suggestUsername(user.email);
 
   return (
-    <main id="main" tabIndex={-1} className="flex flex-1 flex-col bg-muted/40">
-      <header className="flex items-center justify-between p-4 sm:p-6">
+    <div className="flex flex-1 flex-col">
+      <header className="mx-auto flex h-20 w-full max-w-6xl items-center justify-between px-5 sm:px-8">
         <Logo href="/onboarding" />
         <SignOutButton />
       </header>
-      <div className="flex flex-1 items-start justify-center px-4 pb-16 pt-6 sm:items-center sm:pt-0">
-        <div className="w-full max-w-md rounded-2xl border bg-card p-6 shadow-sm sm:p-8">
-          <h1 className="text-2xl font-semibold tracking-tight">Claim your link</h1>
-          <p className="mt-1 mb-6 text-sm text-muted-foreground">
-            Pick a username for your public page. You can change it later in Settings.
+      <main id="main" tabIndex={-1} className="flex flex-1 justify-center px-5 pt-6 pb-20 sm:pt-14">
+        <div className="w-full max-w-[440px]">
+          <h1 className="font-display text-5xl leading-none tracking-[-0.01em]">Claim your link</h1>
+          <p className="mt-3 mb-8 text-muted-foreground">
+            Pick the username for your public page. You can change it later in Settings.
           </p>
           <OnboardingForm suggestion={suggestion} prefix={`${new URL(SITE_URL).host}/`} />
         </div>
-      </div>
-    </main>
+      </main>
+    </div>
   );
 }

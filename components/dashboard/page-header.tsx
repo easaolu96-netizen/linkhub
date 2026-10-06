@@ -1,17 +1,50 @@
-export function PageHeader({ title, description }: { title: string; description?: string }) {
+export function PageHeader({
+  title,
+  description,
+  actions,
+}: {
+  title: string;
+  description?: string;
+  /** Optional controls aligned to the right of the title (e.g. a date range). */
+  actions?: React.ReactNode;
+}) {
   return (
-    <div className="mb-6">
-      <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
-      {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}
+    <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
+      <div>
+        <h1 className="font-display text-[2.75rem] leading-none tracking-[-0.01em]">{title}</h1>
+        {description && <p className="mt-3 max-w-lg text-muted-foreground">{description}</p>}
+      </div>
+      {actions}
     </div>
   );
 }
 
-/** Temporary placeholder for tabs built in later phases. */
-export function ComingSoon({ phase }: { phase: number }) {
+/**
+ * A titled block inside a dashboard tab. Blocks are separated by space and a
+ * hairline rule rather than boxed cards, so the page reads as one document.
+ */
+export function Section({
+  id,
+  title,
+  description,
+  tone = "default",
+  children,
+}: {
+  id: string;
+  title: string;
+  description?: string;
+  tone?: "default" | "danger";
+  children: React.ReactNode;
+}) {
   return (
-    <div className="rounded-2xl border border-dashed bg-card p-10 text-center text-sm text-muted-foreground">
-      This tab is built in Phase {phase}.
-    </div>
+    <section aria-labelledby={id} className="border-t py-9 first:border-t-0 first:pt-0">
+      <div className="mb-6">
+        <h2 id={id} className={tone === "danger" ? "font-medium text-destructive" : "font-medium"}>
+          {title}
+        </h2>
+        {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}
+      </div>
+      {children}
+    </section>
   );
 }

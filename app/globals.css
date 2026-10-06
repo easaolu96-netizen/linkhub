@@ -10,6 +10,13 @@
   --font-sans: var(--font-sans);
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-sans);
+  --font-display: var(--font-instrument-serif);
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-green: var(--green);
+  --color-green-soft: var(--green-soft);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -49,38 +56,47 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
+  /* LinkHub — editorial & warm. Paper, ink and one deep-green accent.
+     All text pairings checked to WCAG AA (see lib/color.ts). */
+  --paper: #f6f4ef;
+  --surface: #fffefb;
+  --ink: #1b1a17;
+  --ink-soft: #3d3a34;
+  --green: #1e5b47;
+  --green-soft: #e3ece6;
+
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --card: var(--surface);
+  --card-foreground: var(--ink);
+  --popover: var(--surface);
+  --popover-foreground: var(--ink);
+  --primary: var(--green);
+  --primary-foreground: #fbfaf6;
+  --secondary: #eeebe3;
+  --secondary-foreground: var(--ink);
+  --muted: #eeebe3;
+  --muted-foreground: #67635a;
+  --accent: #ebe7dd;
+  --accent-foreground: var(--ink);
+  --destructive: #b42318;
+  --border: #e4e0d6;
+  --input: #cfc9bb;
+  --ring: var(--green);
+  --chart-1: #2a78d6;
+  --chart-2: #eb6834;
+  --chart-3: #1baf7a;
+  --chart-4: #eda100;
+  --chart-5: #e87ba4;
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar: var(--paper);
+  --sidebar-foreground: var(--ink);
+  --sidebar-primary: var(--green);
+  --sidebar-primary-foreground: #fbfaf6;
+  --sidebar-accent: #ebe7dd;
+  --sidebar-accent-foreground: var(--ink);
+  --sidebar-border: #e4e0d6;
+  --sidebar-ring: var(--green);
 }
 
 .dark {
@@ -129,6 +145,12 @@
   }
   html {
     @apply font-sans;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  ::selection {
+    background: var(--green-soft);
+    color: var(--ink);
   }
 }
 /* <main> is focusable only as the "Skip to content" target; no outline needed. */

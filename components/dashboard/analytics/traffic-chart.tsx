@@ -18,7 +18,7 @@ import type { DailyPoint } from "@/lib/analytics-data";
 const VIZ = {
   views: "#2a78d6",
   clicks: "#eb6834",
-  surface: "#ffffff",
+  surface: "#f6f4ef",
   grid: "#e1e0d9",
   axis: "#c3c2b7",
   muted: "#6b6a65",

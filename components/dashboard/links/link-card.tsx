@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { BarChart3, GripVertical, Pencil, Trash2 } from "lucide-react";
+import { GripVertical, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useDashboard } from "@/components/dashboard/dashboard-provider";
 import {
@@ -51,9 +51,7 @@ export function LinkCard({ link }: { link: DashboardLink }) {
       toast.error(result.error);
       return false;
     }
-    setLinks((current) =>
-      current.map((l) => (l.id === link.id ? { ...result.data, clicks: l.clicks } : l)),
-    );
+    setLinks((current) => current.map((l) => (l.id === link.id ? { ...result.data, clicks: l.clicks } : l)));
     return true;
   }
 
@@ -104,9 +102,9 @@ export function LinkCard({ link }: { link: DashboardLink }) {
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={cn(
-        "flex gap-1 rounded-2xl border bg-card py-3 pr-3 pl-1 shadow-xs sm:pr-4",
-        isDragging && "relative z-10 shadow-lg ring-2 ring-ring/40",
-        !link.is_visible && !editing && "bg-card/60",
+        "flex items-center gap-1 rounded-xl border bg-surface py-3 pr-3 pl-1 sm:pr-4",
+        isDragging && "relative z-10 shadow-[0_12px_30px_-12px_rgba(27,26,23,0.35)] ring-1 ring-ink/20",
+        !link.is_visible && !editing && "bg-transparent",
       )}
     >
       <button
@@ -150,7 +148,13 @@ export function LinkCard({ link }: { link: DashboardLink }) {
               {errors.url && <FieldError>{errors.url}</FieldError>}
             </Field>
             <div className="flex justify-end gap-2">
-              <Button type="button" variant="ghost" size="sm" onClick={() => setEditing(false)} disabled={isSaving}>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setEditing(false)}
+                disabled={isSaving}
+              >
                 Cancel
               </Button>
               <Button type="submit" size="sm" disabled={isSaving}>
@@ -160,53 +164,62 @@ export function LinkCard({ link }: { link: DashboardLink }) {
             </div>
           </form>
         ) : (
-          <div className="flex items-start gap-3 pl-1">
+          <div className="flex items-center gap-2 pl-1 sm:gap-3">
             <div className="min-w-0 flex-1">
               <p className={cn("truncate font-medium", !link.is_visible && "text-muted-foreground")}>
                 {link.title}
               </p>
-              <p className="truncate text-sm text-muted-foreground">{displayUrl(link.url)}</p>
-              <div className="mt-2 flex items-center gap-1">
-                <span className="mr-auto inline-flex items-center gap-1 text-xs text-muted-foreground">
-                  <BarChart3 className="size-3.5" aria-hidden />
+              <p className="truncate text-sm text-muted-foreground">
+                {displayUrl(link.url)}
+                <span aria-hidden> · </span>
+                <span className="tabular-nums">
                   {link.clicks.toLocaleString()} {link.clicks === 1 ? "click" : "clicks"}
                 </span>
-                <Button variant="ghost" size="icon-sm" onClick={startEditing} aria-label={`Edit "${link.title}"`}>
-                  <Pencil aria-hidden />
-                </Button>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      className="text-muted-foreground hover:text-destructive"
-                      aria-label={`Delete "${link.title}"`}
-                    >
-                      <Trash2 aria-hidden />
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Delete this link?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        &ldquo;{link.title}&rdquo; and its click history will be permanently removed.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction variant="destructive" onClick={remove}>
-                        Delete
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </div>
+                {!link.is_visible && <span> · hidden</span>}
+              </p>
+            </div>
+            <div className="flex shrink-0 items-center">
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="text-muted-foreground hover:text-foreground"
+                onClick={startEditing}
+                aria-label={`Edit "${link.title}"`}
+              >
+                <Pencil aria-hidden />
+              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    className="text-muted-foreground hover:text-destructive"
+                    aria-label={`Delete "${link.title}"`}
+                  >
+                    <Trash2 aria-hidden />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete this link?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      &ldquo;{link.title}&rdquo; and its click history will be permanently removed.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction variant="destructive" onClick={remove}>
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
             <Switch
               checked={link.is_visible}
               onCheckedChange={(checked) => void patch({ is_visible: checked })}
               aria-label={link.is_visible ? `Hide "${link.title}"` : `Show "${link.title}"`}
-              className="mt-1"
+              className="ml-1"
             />
           </div>
         )}

@@ -25,7 +25,7 @@ export function UsernameField({ id, value, onChange, availability, prefix, autoF
     <div className="flex flex-col gap-2">
       <div
         className={cn(
-          "flex h-11 items-center overflow-hidden rounded-lg border bg-background text-base transition-[color,box-shadow] focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 md:text-sm",
+          "flex h-12 items-center overflow-hidden rounded-xl border border-input bg-surface text-base transition-[color,box-shadow] focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/20",
           invalid && "border-destructive focus-within:border-destructive focus-within:ring-destructive/20",
         )}
       >

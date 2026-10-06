@@ -2,23 +2,22 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, Link2, Palette, Settings, UserRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const TABS = [
-  { href: "/dashboard", label: "Links", icon: Link2 },
-  { href: "/dashboard/profile", label: "Profile", icon: UserRound },
-  { href: "/dashboard/appearance", label: "Appearance", icon: Palette },
-  { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/dashboard/settings", label: "Settings", icon: Settings },
+  { href: "/dashboard", label: "Links" },
+  { href: "/dashboard/profile", label: "Profile" },
+  { href: "/dashboard/appearance", label: "Appearance" },
+  { href: "/dashboard/analytics", label: "Analytics" },
+  { href: "/dashboard/settings", label: "Settings" },
 ] as const;
 
 export function DashboardNav() {
   const pathname = usePathname();
 
   return (
-    <nav aria-label="Dashboard" className="-mb-px flex gap-1 overflow-x-auto [scrollbar-width:none]">
-      {TABS.map(({ href, label, icon: Icon }) => {
+    <nav aria-label="Dashboard" className="-mb-px flex gap-6 overflow-x-auto [scrollbar-width:none] sm:gap-8">
+      {TABS.map(({ href, label }) => {
         const active = pathname === href;
         return (
           <Link
@@ -26,13 +25,12 @@ export function DashboardNav() {
             href={href}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "inline-flex shrink-0 items-center gap-2 border-b-2 px-3 py-3 text-sm font-medium outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring/50",
+              "shrink-0 border-b-[1.5px] py-3 text-[15px] outline-none transition-colors focus-visible:text-foreground focus-visible:underline",
               active
-                ? "border-foreground text-foreground"
+                ? "border-ink font-medium text-foreground"
                 : "border-transparent text-muted-foreground hover:text-foreground",
             )}
           >
-            <Icon className="size-4" aria-hidden />
             {label}
           </Link>
         );

@@ -51,7 +51,7 @@ export function DeleteAccount() {
         }}
       >
         <AlertDialogTrigger asChild>
-          <Button variant="destructive" className="shrink-0">
+          <Button variant="outline" className="shrink-0 border-destructive/40 text-destructive hover:bg-destructive/5 hover:text-destructive">
             <Trash2 aria-hidden />
             Delete account
           </Button>
