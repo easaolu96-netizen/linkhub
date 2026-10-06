@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { safeAvatarUrl } from "@/lib/avatar";
 import { SITE_URL } from "@/lib/env";
 import { getPublicProfile } from "@/lib/public-profile";
 import { themeBackground } from "@/lib/theme";
@@ -11,13 +12,25 @@ export const contentType = "image/png";
  * The OG renderer only understands PNG/JPEG, so fetch the avatar ourselves and
  * embed it as a data URL; anything else (e.g. WebP) falls back to initials.
  */
-async function loadAvatar(src: string | null) {
-  if (!src) return null;
+const MAX_AVATAR_BYTES = 1024 * 1024;
+
+async function loadAvatar(src: string | null, ownerId: string) {
+  // SSRF guard: only fetch our own storage or Google photos, never follow
+  // redirects, and cap the size.
+  const url = safeAvatarUrl(src, ownerId);
+  if (!url) return null;
   try {
-    const res = await fetch(src, { headers: { Accept: "image/png,image/jpeg" }, signal: AbortSignal.timeout(3000) });
+    const res = await fetch(url, {
+      headers: { Accept: "image/png,image/jpeg" },
+      redirect: "error",
+      signal: AbortSignal.timeout(3000),
+    });
     const type = res.headers.get("content-type")?.split(";")[0];
     if (!res.ok || (type !== "image/png" && type !== "image/jpeg")) return null;
-    return `data:${type};base64,${Buffer.from(await res.arrayBuffer()).toString("base64")}`;
+    if (Number(res.headers.get("content-length") ?? 0) > MAX_AVATAR_BYTES) return null;
+    const bytes = Buffer.from(await res.arrayBuffer());
+    if (bytes.length > MAX_AVATAR_BYTES) return null;
+    return `data:${type};base64,${bytes.toString("base64")}`;
   } catch {
     return null;
   }
@@ -44,7 +57,7 @@ export default async function Image({ params }: { params: Promise<{ username: st
   const { theme } = profile;
   const name = profile.display_name?.trim() || `@${profile.username}`;
   const initials = (profile.display_name || profile.username).slice(0, 1).toUpperCase();
-  const avatar = await loadAvatar(profile.avatar_url);
+  const avatar = await loadAvatar(profile.avatar_url, profile.id);
   const bio = profile.bio && profile.bio.length > 120 ? `${profile.bio.slice(0, 117)}…` : profile.bio;
 
   return new ImageResponse(

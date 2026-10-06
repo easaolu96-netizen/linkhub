@@ -130,6 +130,8 @@ The schema lives in `supabase/migrations/` and is applied in filename order:
 | `20261005000000_init_schema.sql` | `profiles`, `links`, `page_views` and `link_clicks` tables, plus the indexes, `updated_at` triggers, the trigger that creates a profile for each new user, **Row Level Security** on every table, RPC helpers, and the `avatars` storage bucket and its policies |
 | `20261005010000_create_link_fn.sql` | `create_link()`: limit check, "add to top" and insert in one round trip |
 | `20261005020000_analytics_fn.sql` | `get_analytics(days)`: all dashboard analytics in one round trip |
+| `20261007000000_security_hardening.sql` | Tighter RLS and column privileges, avatar-URL and JSON-size constraints, link-limit trigger, storage naming/quota rules, rate-limit buckets, audit log, more reserved usernames |
+| `20261007010000_safe_signup_avatar.sql` | Sign-up trigger keeps a provider photo only if it passes the avatar allowlist |
 
 **Row Level Security summary**
 - `profiles`: anyone can read; only the owner can insert, update or delete.
@@ -272,6 +274,9 @@ From now on, every `git push` to `main` redeploys automatically, and pull reques
 ---
 
 ## Security notes
+
+See **[SECURITY-AUDIT.md](SECURITY-AUDIT.md)** for the full audit: findings, fixes, tests and remaining risks.
+
 
 - The service-role key is only used in server code: `lib/supabase/admin.ts`, which is guarded by `server-only`, and the seed and verify scripts.
 - Every server action validates its input with Zod and checks the session (`getClaims()` verifies the JWT locally). Database writes are also limited by RLS.

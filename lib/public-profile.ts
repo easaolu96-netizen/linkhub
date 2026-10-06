@@ -1,5 +1,6 @@
 import "server-only";
 import { cache } from "react";
+import { safeAvatarUrl } from "@/lib/avatar";
 import { createPublicClient } from "@/lib/supabase/public";
 import { parseSocials } from "@/lib/socials";
 import { parseTheme } from "@/lib/theme";
@@ -35,6 +36,7 @@ export const getPublicProfile = cache(
       profile: {
         ...row,
         username: row.username,
+        avatar_url: safeAvatarUrl(row.avatar_url, row.id),
         theme: parseTheme(row.theme),
         socials: parseSocials(row.socials),
       },

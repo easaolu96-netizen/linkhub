@@ -3,6 +3,8 @@
 import { z } from "zod";
 import { fail, type ActionResult } from "@/lib/action-result";
 import { getAuthUser } from "@/lib/auth";
+import { audit } from "@/lib/security/audit";
+import { TOO_MANY_ATTEMPTS, withinLimits } from "@/lib/security/limits";
 import type { Socials } from "@/lib/socials";
 import { createClient } from "@/lib/supabase/server";
 import { avatarPathSchema, profileUpdateSchema } from "@/lib/validation/profile";
@@ -44,6 +46,7 @@ export async function setAvatar(path: unknown): Promise<ActionResult<{ avatar_ur
 
   const parsed = avatarPathSchema.safeParse(path);
   if (!parsed.success || !parsed.data.startsWith(`${user.id}/`)) return fail("Invalid upload.");
+  if (!(await withinLimits([["avatarChange", user.id]]))) return fail(TOO_MANY_ATTEMPTS);
 
   const supabase = await createClient();
   const storage = supabase.storage.from(AVATAR_BUCKET);
@@ -58,6 +61,7 @@ export async function setAvatar(path: unknown): Promise<ActionResult<{ avatar_ur
   if (error) return fail("Couldn't save your avatar. Please try again.");
 
   await cleanUpAvatars(supabase, user.id, parsed.data);
+  await audit("avatar.changed", { userId: user.id });
   return { ok: true, data: { avatar_url }, message: "Avatar updated" };
 }
 

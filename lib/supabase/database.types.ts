@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_logs: {
+        Row: {
+          created_at: string
+          email: string | null
+          event: string
+          id: number
+          ip: string | null
+          metadata: Json
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          event: string
+          id?: never
+          ip?: string | null
+          metadata?: Json
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          event?: string
+          id?: never
+          ip?: string | null
+          metadata?: Json
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       link_clicks: {
         Row: {
           created_at: string
@@ -162,11 +195,33 @@ export type Database = {
         }
         Relationships: []
       }
+      rate_limit_buckets: {
+        Row: {
+          count: number
+          key: string
+          reset_at: string
+        }
+        Insert: {
+          count: number
+          key: string
+          reset_at: string
+        }
+        Update: {
+          count?: number
+          key?: string
+          reset_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      consume_rate_limit: {
+        Args: { p_key: string; p_limit: number; p_window_seconds: number }
+        Returns: boolean
+      }
       create_link: {
         Args: { p_title: string; p_url: string }
         Returns: {
@@ -195,6 +250,8 @@ export type Database = {
         }[]
       }
       is_reserved_username: { Args: { name: string }; Returns: boolean }
+      my_avatar_object_count: { Args: never; Returns: number }
+      purge_old_audit_logs: { Args: { keep_days?: number }; Returns: number }
       reorder_links: { Args: { link_ids: string[] }; Returns: undefined }
     }
     Enums: {

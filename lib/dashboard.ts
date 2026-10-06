@@ -1,6 +1,7 @@
 import "server-only";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
+import { safeAvatarUrl } from "@/lib/avatar";
 import { getCurrentProfile } from "@/lib/profile";
 import { createClient } from "@/lib/supabase/server";
 import { parseSocials } from "@/lib/socials";
@@ -37,7 +38,7 @@ export async function getDashboardData(): Promise<{
       username: row.username,
       display_name: row.display_name,
       bio: row.bio,
-      avatar_url: row.avatar_url,
+      avatar_url: safeAvatarUrl(row.avatar_url, row.id),
       theme: parseTheme(row.theme),
       socials: parseSocials(row.socials),
     },

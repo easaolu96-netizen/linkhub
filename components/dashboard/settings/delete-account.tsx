@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
+import { reauthenticate } from "@/app/auth/actions";
 import { deleteAccount } from "@/lib/actions/account";
 
 export function DeleteAccount() {
@@ -33,7 +34,16 @@ export function DeleteAccount() {
     startTransition(async () => {
       // On success the action redirects to the home page.
       const result = await deleteAccount(typed);
-      if (result && !result.ok) toast.error(result.error);
+      if (!result || result.ok) return;
+      if (result.fieldErrors?.reauth) {
+        // Sensitive action: the server wants a fresh sign-in first.
+        toast.error(result.error, {
+          duration: 10_000,
+          action: { label: "Log in again", onClick: () => void reauthenticate() },
+        });
+        return;
+      }
+      toast.error(result.error);
     });
   }
 
