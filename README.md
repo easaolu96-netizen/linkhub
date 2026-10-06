@@ -23,7 +23,7 @@ A "link in bio" app in the style of Linktree. People sign up, claim a username, 
 
 ## Features
 
-- **Auth:** email + password (with email confirmation) and Google sign-in through Supabase Auth. `proxy.ts` protects `/dashboard` and `/onboarding`.
+- **Auth:** email + password (confirmed with a code emailed to the user) and Google sign-in through Supabase Auth. `proxy.ts` protects `/dashboard` and `/onboarding`.
 - **Username onboarding:** 3–30 characters (`a–z 0–9 _ -`), checked live as you type, with reserved words blocked. The rules are enforced in the browser, in the server actions and in Postgres.
 - **Dashboard:** a two-column editor with a live phone preview that collapses to a "Preview" button on mobile. It has five tabs:
   - **Links:** add (`https://` added automatically, only `http`, `https` and `mailto` allowed), inline edit, delete with confirmation, show/hide, drag-and-drop reordering (mouse, touch and keyboard), and a click count on each link.
@@ -244,12 +244,22 @@ Supabase's built-in email service is only for testing. It sends very few emails 
 3. In **Supabase → Authentication → Emails → SMTP Settings**, turn on **custom SMTP**:
    - Host `smtp.resend.com`, port `465`, username `resend`, password = the API key
    - Sender email `no-reply@kashdigit.com`, sender name `LinkHub`
-4. Optional: in **Authentication → Rate Limits**, raise the email limit, and in **Emails → Templates**, personalise the confirmation email.
+4. **Make the confirmation email show the code.** In **Supabase → Authentication → Emails → Templates → Confirm signup**:
+   - **Subject:** `Your LinkHub code: {{ .Token }}`
+   - **Body:** must contain `{{ .Token }}`. LinkHub asks users to type this code on the sign-up page. A ready-made template:
+     ```html
+     <h2>Confirm your LinkHub account</h2>
+     <p>Enter this code on the sign-up page:</p>
+     <p style="font-size:32px;font-weight:700;letter-spacing:6px">{{ .Token }}</p>
+     <p>The code expires in 1 hour. If you didn't sign up, you can ignore this email.</p>
+     ```
+   - Optional: in **Authentication → Sign In / Providers → Email**, set **Email OTP Length** to `6` for a shorter code.
+5. Optional: in **Authentication → Rate Limits**, raise the email limit.
 
 ### 7. Check the live site
 
 - [ ] Open `https://linktree.kashdigit.com` and claim a username from the landing page.
-- [ ] Sign up with email, receive the confirmation email, click it, and land on onboarding.
+- [ ] Sign up with email, receive the code by email, enter it, and land on onboarding.
 - [ ] Sign in with Google.
 - [ ] Add links, change the theme, then open your public page in a private window and click a link. Views and clicks should appear in Analytics; your own logged-in visits aren't counted.
 - [ ] Paste your profile URL into WhatsApp or X and check the preview card. You can also use [opengraph.xyz](https://www.opengraph.xyz).
@@ -278,6 +288,7 @@ From now on, every `git push` to `main` redeploys automatically, and pull reques
 | Google: "Access blocked / app not verified" | Add yourself as a test user, or publish the app (Deploy step 5). |
 | After Google sign-in you land on the home page with `?code=` in the URL | Add the site to **Supabase → URL Configuration → Redirect URLs** (Deploy step 4). |
 | No confirmation email arrives | Set up custom SMTP (Deploy step 6), and check spam. |
+| The email has a link but no code | Edit the **Confirm signup** template to include `{{ .Token }}` (Deploy step 6.4). |
 | `Missing environment variable …` | Fill in `.env.local` locally, or the Vercel env vars, then redeploy. |
 | Bulk inserts fail with `null value in column "is_visible"` | In multi-row inserts, Supabase fills missing columns with NULL, not the default. Give every row the same set of keys. |
 | Share images show initials instead of the photo | The share-image renderer can't read WebP. New uploads are JPEG; re-upload older photos. |

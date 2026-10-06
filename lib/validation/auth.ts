@@ -21,5 +21,15 @@ export const signupSchema = z.object({
     .max(72, "Password must be 72 characters or fewer"),
 });
 
+/** Code from the confirmation email (6 digits by default; Supabase allows up to 10). */
+export const emailCodeSchema = z.object({
+  email: emailSchema,
+  code: z
+    .string()
+    .trim()
+    .transform((value) => value.replace(/\s+/g, ""))
+    .pipe(z.string().regex(/^\d{6,10}$/, "Enter the code from the email")),
+});
+
 export type LoginInput = z.input<typeof loginSchema>;
 export type SignupInput = z.input<typeof signupSchema>;

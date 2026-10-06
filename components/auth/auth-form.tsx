@@ -3,10 +3,10 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { MailCheck } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { login, signup } from "@/app/auth/actions";
+import { EmailCodeStep } from "@/components/auth/email-code-step";
 import { GoogleButton } from "@/components/auth/google-button";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldGroup, FieldLabel, FieldSeparator } from "@/components/ui/field";
@@ -30,7 +30,7 @@ export function AuthForm({ mode, next }: { mode: Mode; next?: string }) {
     startTransition(async () => {
       const result = isLogin ? await login(values, next) : await signup(values, next);
       // On success the action redirects, so we only get here on errors or
-      // when the user still has to confirm their email.
+      // when the user still has to confirm their email with a code.
       if (!result) return;
       if (!result.ok) {
         toast.error(result.error);
@@ -47,19 +47,11 @@ export function AuthForm({ mode, next }: { mode: Mode; next?: string }) {
 
   if (sentTo) {
     return (
-      <div className="flex flex-col items-center gap-3 text-center" role="status">
-        <span className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
-          <MailCheck className="size-6" aria-hidden />
-        </span>
-        <h2 className="text-lg font-semibold">Check your email</h2>
-        <p className="text-sm text-muted-foreground">
-          We sent a confirmation link to <span className="font-medium text-foreground">{sentTo}</span>.
-          Click it to finish creating your account.
-        </p>
-        <Button variant="ghost" size="sm" onClick={() => setSentTo(null)}>
-          Use a different email
-        </Button>
-      </div>
+      <EmailCodeStep
+        email={sentTo}
+        next={next ?? (isLogin ? "/dashboard" : "/onboarding")}
+        onBack={() => setSentTo(null)}
+      />
     );
   }
 
