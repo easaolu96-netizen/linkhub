@@ -20,9 +20,27 @@ export function isPrefetch(headers: HeaderSource) {
   );
 }
 
+/**
+ * The visitor's IP address, used as the key for rate limits and in audit logs.
+ *
+ * ⚠️ This trusts headers that only VERCEL guarantees: Vercel's edge discards
+ * any `x-real-ip` / `x-forwarded-for` sent by the client and sets them to the
+ * connecting IP itself (verified on the live site: forged values are ignored).
+ * Anywhere else (`next start` on another host, local dev) a client can set
+ * these headers and pick its own IP, i.e. dodge every per-IP limit.
+ *
+ * If Cloudflare proxying (orange cloud) or any other proxy is ever put in
+ * front of Vercel, every visitor will appear to come from that proxy's IPs.
+ * This function must then read the proxy's own client-IP header instead
+ * (e.g. `cf-connecting-ip` for Cloudflare) — and only accept it when the
+ * request really came through that proxy.
+ */
 export function getClientIp(headers: HeaderSource) {
+  const realIp = headers.get("x-real-ip")?.trim();
+  if (realIp) return realIp;
+  // Fallback: on Vercel this header holds a single, Vercel-set value.
   const forwarded = headers.get("x-forwarded-for")?.split(",")[0]?.trim();
-  return forwarded || headers.get("x-real-ip") || "unknown";
+  return forwarded || "unknown";
 }
 
 /** Keep only the referring site's origin (privacy + short values). */
