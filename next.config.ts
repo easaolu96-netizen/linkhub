@@ -13,18 +13,22 @@ const isDev = process.env.NODE_ENV !== "production";
  *   a per-request nonce (documented trade-off in SECURITY-AUDIT.md).
  * - Network: only this site and the Supabase project (auth + storage uploads).
  * - Images: this site, Supabase Storage avatars, Google profile photos.
- * - No plugins, no framing, no foreign form targets, no <base> hijacking.
+ * - Cloudflare Turnstile (CAPTCHA on the auth forms) loads its script and
+ *   runs its check in an iframe from challenges.cloudflare.com.
+ * - No plugins, no other framing, no foreign form targets, no <base> hijacking.
  */
+const turnstileOrigin = "https://challenges.cloudflare.com";
+
 const csp = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
+  `script-src 'self' 'unsafe-inline' ${turnstileOrigin}${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
   `img-src 'self' data: blob: ${supabaseOrigin} https://lh3.googleusercontent.com`,
   "font-src 'self' data:",
   `connect-src 'self' ${supabaseOrigin}${isDev ? " ws://localhost:* http://localhost:*" : ""}`,
   "media-src 'none'",
   "object-src 'none'",
-  "frame-src 'none'",
+  `frame-src ${turnstileOrigin}`,
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",

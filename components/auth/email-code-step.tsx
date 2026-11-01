@@ -3,6 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { resendEmailCode, verifyEmailCode } from "@/app/auth/actions";
+import { CAPTCHA_ENABLED, Turnstile } from "@/components/auth/turnstile";
 import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -13,16 +14,21 @@ const RESEND_COOLDOWN = 60;
 /** "Enter the code we emailed you" step shown after sign-up (or an unconfirmed login). */
 export function EmailCodeStep({
   email,
+  codeSent,
   next,
   onBack,
 }: {
   email: string;
+  /** False after an unconfirmed login: no new code was sent, so resend is offered right away. */
+  codeSent: boolean;
   next?: string;
   onBack: () => void;
 }) {
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [cooldown, setCooldown] = useState(RESEND_COOLDOWN);
+  const [cooldown, setCooldown] = useState(codeSent ? RESEND_COOLDOWN : 0);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaKey, setCaptchaKey] = useState(0);
   const [isVerifying, startVerifying] = useTransition();
   const [isResending, startResending] = useTransition();
 
@@ -47,8 +53,14 @@ export function EmailCodeStep({
   }
 
   function onResend() {
+    if (CAPTCHA_ENABLED && !captchaToken) {
+      toast.error("Please wait a moment for the security check to finish.");
+      return;
+    }
+    const token = captchaToken ?? undefined;
     startResending(async () => {
-      const result = await resendEmailCode(email);
+      const result = await resendEmailCode(email, token);
+      setCaptchaKey((k) => k + 1); // single-use token
       if (!result.ok) {
         toast.error(result.error);
         return;
@@ -65,8 +77,11 @@ export function EmailCodeStep({
       <div>
         <h2 className="font-display text-3xl leading-none">Check your email</h2>
         <p className="mt-3 text-muted-foreground" role="status">
-          We sent a code to <span className="font-medium break-all text-foreground">{email}</span>. Enter it
-          below to confirm your account.
+          {codeSent ? "We sent a code to " : "Confirm "}
+          <span className="font-medium break-all text-foreground">{email}</span>
+          {codeSent
+            ? ". Enter it below to confirm your account."
+            : " before logging in. Enter the code from your sign-up email, or send yourself a new one below."}
         </p>
       </div>
 
@@ -100,14 +115,18 @@ export function EmailCodeStep({
         </Button>
       </form>
 
-      <div className="flex items-center justify-between gap-2 border-t pt-4 text-sm">
-        <Button variant="link" size="sm" className="px-0" onClick={onResend} disabled={cooldown > 0 || isResending}>
-          {isResending && <Spinner />}
-          {cooldown > 0 ? `Resend code in ${cooldown}s` : "Resend code"}
-        </Button>
-        <Button variant="link" size="sm" className="px-0 text-muted-foreground" onClick={onBack}>
-          Use a different email
-        </Button>
+      <div className="flex flex-col gap-3 border-t pt-4">
+        {/* Only needed (and only shown) once a resend is possible. */}
+        {cooldown <= 0 && <Turnstile key={captchaKey} action="resend" onToken={setCaptchaToken} />}
+        <div className="flex items-center justify-between gap-2 text-sm">
+          <Button variant="link" size="sm" className="px-0" onClick={onResend} disabled={cooldown > 0 || isResending}>
+            {isResending && <Spinner />}
+            {cooldown > 0 ? `Resend code in ${cooldown}s` : codeSent ? "Resend code" : "Send a new code"}
+          </Button>
+          <Button variant="link" size="sm" className="px-0 text-muted-foreground" onClick={onBack}>
+            Use a different email
+          </Button>
+        </div>
       </div>
     </div>
   );

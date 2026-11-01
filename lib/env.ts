@@ -20,6 +20,9 @@ export const SUPABASE_ANON_KEY = required(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
 );
 
+/** Cloudflare Turnstile site key (public). Empty = CAPTCHA widget disabled. */
+export const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? "";
+
 export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(
   /\/+$/,
   "",

@@ -19,6 +19,7 @@ import { emailCodeSchema, emailSchema, loginSchema, signupSchema } from "@/lib/v
 
 function friendlyAuthError(message: string) {
   const m = message.toLowerCase();
+  if (m.includes("captcha")) return "The security check failed or expired. Please try again.";
   if (m.includes("invalid login credentials")) return "Incorrect email or password.";
   if (m.includes("expired") || (m.includes("invalid") && m.includes("token")))
     return "That code is wrong or has expired. Check the latest email or request a new code.";
@@ -33,9 +34,24 @@ async function clientIp() {
   return getClientIp(await headers());
 }
 
-type NeedsCode = { needsConfirmation: true };
+/**
+ * Cloudflare Turnstile token from the form. Supabase verifies it (when CAPTCHA
+ * protection is on in the dashboard); here we only make sure it's a sane string.
+ */
+function captchaOption(token: unknown) {
+  return typeof token === "string" && token.length > 0 && token.length <= 4096
+    ? { captchaToken: token }
+    : {};
+}
 
-export async function login(input: unknown, next?: string): Promise<ActionResult<NeedsCode>> {
+/** `codeSent` is false when the user still has to request a code themselves. */
+type NeedsCode = { needsConfirmation: true; codeSent: boolean };
+
+export async function login(
+  input: unknown,
+  next?: string,
+  captchaToken?: unknown,
+): Promise<ActionResult<NeedsCode>> {
   const parsed = loginSchema.safeParse(input);
   if (!parsed.success) {
     return fail("Please fix the errors below.", z.flattenError(parsed.error).fieldErrors);
@@ -48,16 +64,18 @@ export async function login(input: unknown, next?: string): Promise<ActionResult
   }
 
   const supabase = await createClient();
-  const { data, error } = await supabase.auth.signInWithPassword(parsed.data);
+  const { data, error } = await supabase.auth.signInWithPassword({
+    ...parsed.data,
+    options: captchaOption(captchaToken),
+  });
 
   if (error?.code === "email_not_confirmed" || error?.message.toLowerCase().includes("email not confirmed")) {
-    // Correct password but the address was never confirmed: send a fresh code
-    // (within the resend limits) and switch the form to the "enter code" step.
+    // Correct password but the address was never confirmed: switch the form to
+    // the "enter code" step. No code is sent from here, because the CAPTCHA
+    // token was single-use and is already spent; the step asks the user to
+    // request one (with a fresh check).
     await audit("login.unconfirmed", { email });
-    if (await withinLimits([["resendEmail", email]])) {
-      await supabase.auth.resend({ type: "signup", email });
-    }
-    return { ok: true, data: { needsConfirmation: true } };
+    return { ok: true, data: { needsConfirmation: true, codeSent: false } };
   }
   if (error) {
     await audit("login.failed", { email, metadata: { reason: error.code ?? "unknown" } });
@@ -68,7 +86,11 @@ export async function login(input: unknown, next?: string): Promise<ActionResult
   redirect(safeRedirectPath(next));
 }
 
-export async function signup(input: unknown, next?: string): Promise<ActionResult<NeedsCode>> {
+export async function signup(
+  input: unknown,
+  next?: string,
+  captchaToken?: unknown,
+): Promise<ActionResult<NeedsCode>> {
   const parsed = signupSchema.safeParse(input);
   if (!parsed.success) {
     return fail("Please fix the errors below.", z.flattenError(parsed.error).fieldErrors);
@@ -86,7 +108,10 @@ export async function signup(input: unknown, next?: string): Promise<ActionResul
     ...parsed.data,
     // Only used if the email template also includes the confirmation link.
     // Built from the configured site URL, never from request headers.
-    options: { emailRedirectTo: `${SITE_URL}/auth/callback?next=${encodeURIComponent(afterConfirm)}` },
+    options: {
+      emailRedirectTo: `${SITE_URL}/auth/callback?next=${encodeURIComponent(afterConfirm)}`,
+      ...captchaOption(captchaToken),
+    },
   });
   if (error) return fail(friendlyAuthError(error.message));
   await audit("signup.requested", { email });
@@ -94,7 +119,7 @@ export async function signup(input: unknown, next?: string): Promise<ActionResul
   // With "Confirm email" enabled Supabase returns no session until the code is
   // entered. (It also returns no session for an already-registered email, so we
   // show the same step and don't reveal which emails have accounts.)
-  if (!data.session) return { ok: true, data: { needsConfirmation: true } };
+  if (!data.session) return { ok: true, data: { needsConfirmation: true, codeSent: true } };
 
   redirect(afterConfirm);
 }
@@ -127,7 +152,7 @@ export async function verifyEmailCode(input: unknown, next?: string): Promise<Ac
   redirect(safeRedirectPath(next, "/onboarding"));
 }
 
-export async function resendEmailCode(email: unknown): Promise<ActionResult> {
+export async function resendEmailCode(email: unknown, captchaToken?: unknown): Promise<ActionResult> {
   const parsed = emailSchema.safeParse(email);
   if (!parsed.success) return fail("Invalid email address.");
 
@@ -137,7 +162,11 @@ export async function resendEmailCode(email: unknown): Promise<ActionResult> {
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.resend({ type: "signup", email: parsed.data });
+  const { error } = await supabase.auth.resend({
+    type: "signup",
+    email: parsed.data,
+    options: captchaOption(captchaToken),
+  });
   if (error) return fail(friendlyAuthError(error.message));
   await audit("email.code_resent", { email: parsed.data });
   return { ok: true, data: undefined, message: "A new code is on its way." };

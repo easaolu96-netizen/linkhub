@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { login, signup } from "@/app/auth/actions";
 import { EmailCodeStep } from "@/components/auth/email-code-step";
 import { GoogleButton } from "@/components/auth/google-button";
+import { CAPTCHA_ENABLED, Turnstile } from "@/components/auth/turnstile";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldGroup, FieldLabel, FieldSeparator } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -18,7 +19,9 @@ type Mode = "login" | "signup";
 
 export function AuthForm({ mode, next }: { mode: Mode; next?: string }) {
   const [isPending, startTransition] = useTransition();
-  const [sentTo, setSentTo] = useState<string | null>(null);
+  const [sentTo, setSentTo] = useState<{ email: string; codeSent: boolean } | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaKey, setCaptchaKey] = useState(0);
   const isLogin = mode === "login";
 
   const form = useForm<LoginInput>({
@@ -27,11 +30,18 @@ export function AuthForm({ mode, next }: { mode: Mode; next?: string }) {
   });
 
   function onSubmit(values: LoginInput) {
+    if (CAPTCHA_ENABLED && !captchaToken) {
+      toast.error("Please wait a moment for the security check to finish.");
+      return;
+    }
+    const token = captchaToken ?? undefined;
     startTransition(async () => {
-      const result = isLogin ? await login(values, next) : await signup(values, next);
+      const result = isLogin ? await login(values, next, token) : await signup(values, next, token);
       // On success the action redirects, so we only get here on errors or
       // when the user still has to confirm their email with a code.
       if (!result) return;
+      // The token was used up by that request; get a fresh one for a retry.
+      setCaptchaKey((k) => k + 1);
       if (!result.ok) {
         toast.error(result.error);
         for (const [field, messages] of Object.entries(result.fieldErrors ?? {})) {
@@ -41,14 +51,15 @@ export function AuthForm({ mode, next }: { mode: Mode; next?: string }) {
         }
         return;
       }
-      setSentTo(values.email);
+      setSentTo({ email: values.email, codeSent: result.data.codeSent });
     });
   }
 
   if (sentTo) {
     return (
       <EmailCodeStep
-        email={sentTo}
+        email={sentTo.email}
+        codeSent={sentTo.codeSent}
         next={next ?? (isLogin ? "/dashboard" : "/onboarding")}
         onBack={() => setSentTo(null)}
       />
@@ -90,6 +101,8 @@ export function AuthForm({ mode, next }: { mode: Mode; next?: string }) {
             />
             <FieldError errors={[errors.password]} />
           </Field>
+
+          <Turnstile key={captchaKey} action={mode} onToken={setCaptchaToken} />
 
           <Button type="submit" size="lg" className="w-full" disabled={isPending}>
             {isPending && <Spinner />}

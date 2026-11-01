@@ -248,11 +248,12 @@ No destructive tests were run against external systems. All probes used temporar
 
 ## Production recommendations
 
-1. **Supabase Auth settings** (dashboard → Authentication):
-   - Minimum password length **8**, matching the app. The default allows 6 via direct API calls.
-   - Turn on **leaked-password protection** (if your plan includes it).
-   - Turn on **CAPTCHA** (hCaptcha or Cloudflare Turnstile) for sign-up/sign-in to stop scripted abuse at the source.
-   - Keep **email OTP expiry** at 1 hour or less.
+1. **Supabase Auth settings** (dashboard → Authentication → Sign In / Providers → Email):
+   - ✅ **Done (1 Nov 2026):** minimum password length **8**, matching the app. Verified: direct API sign-ups with 6- or 7-character passwords are rejected as weak.
+   - ✅ **Done:** **Secure email change**, **Secure password change** and **Require current password when updating** are all on, so a hijacked session can't silently change the account's email or password through the API.
+   - ⏳ **Leaked-password protection:** needs the Pro plan.
+   - ✅ **CAPTCHA** (Cloudflare Turnstile) on email sign-up, login and resend-code. The widget (`components/auth/turnstile.tsx`) sends a single-use token with each request, and Supabase verifies it against Cloudflare using the secret key (stored only in the Supabase dashboard). The CSP allows `https://challenges.cloudflare.com` for `script-src` and `frame-src` only. Google sign-in is unaffected. Supabase's CAPTCHA protection must stay switched on, because without it the tokens are not checked. (Status: app code done; turned on in Supabase once the deploy is live.)
+   - ✅ **Done:** **email OTP expiry** is short. It's set to **15 minutes (900 s)**, which is short enough to limit a code read later from a compromised inbox and long enough for slow email delivery. Brute force is already covered by the 8-digit code and the app's 8-attempts-per-15-minutes limit.
 2. **Schedule audit-log retention:** run `select public.purge_old_audit_logs(180);` monthly, e.g. from Supabase scheduled jobs / `pg_cron`.
 3. **Monitor `audit_logs`** for spikes in `login.failed`, `*.rate_limited` and `email.verify_failed`.
 4. **Separate environments:** use a second Supabase project for development and testing.
