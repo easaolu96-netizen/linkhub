@@ -3,7 +3,6 @@ import type { NextConfig } from "next";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL)
   : null;
-const supabaseHost = supabaseUrl?.hostname ?? "*.supabase.co";
 const supabaseOrigin = supabaseUrl?.origin ?? "https://*.supabase.co";
 const isDev = process.env.NODE_ENV !== "production";
 
@@ -50,13 +49,12 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   // Don't advertise the framework (X-Powered-By: Next.js).
   poweredByHeader: false,
+  // No remote images may go through the image optimizer (/_next/image).
+  // Avatars are rendered with `unoptimized`, so the browser loads them straight
+  // from Supabase Storage / Google. Allowing remote hosts here would let anyone
+  // use our optimizer as a proxy for arbitrary images on those hosts.
   images: {
-    remotePatterns: [
-      // Avatars uploaded to Supabase Storage
-      { protocol: "https", hostname: supabaseHost, pathname: "/storage/v1/object/public/avatars/**" },
-      // Google profile photos (from Google sign-in)
-      { protocol: "https", hostname: "lh3.googleusercontent.com" },
-    ],
+    remotePatterns: [],
   },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];

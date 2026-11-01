@@ -8,6 +8,19 @@ export const alt = "LinkHub profile";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
+// Rendering this image costs a database query, an image render and possibly
+// an avatar download, so it must not run on every request. Each profile's
+// image is generated on its first request, cached, and refreshed at most once
+// an hour. (Per-IP rate limiting for cache misses lives in proxy.ts.)
+export const dynamic = "force-static";
+export const revalidate = 3600;
+
+/** Let the CDN serve repeats too: fresh for an hour, then refreshed in the background. */
+const RESPONSE_OPTIONS = {
+  ...size,
+  headers: { "Cache-Control": "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400" },
+};
+
 /**
  * The OG renderer only understands PNG/JPEG, so fetch the avatar ourselves and
  * embed it as a data URL; anything else (e.g. WebP) falls back to initials.
@@ -49,7 +62,7 @@ export default async function Image({ params }: { params: Promise<{ username: st
           LinkHub
         </div>
       ),
-      size,
+      RESPONSE_OPTIONS,
     );
   }
 
@@ -130,6 +143,6 @@ export default async function Image({ params }: { params: Promise<{ username: st
         )}
       </div>
     ),
-    size,
+    RESPONSE_OPTIONS,
   );
 }
