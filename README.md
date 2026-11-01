@@ -253,7 +253,7 @@ Supabase's built-in email service is only for testing. It sends very few emails 
      <h2>Confirm your LinkHub account</h2>
      <p>Enter this code on the sign-up page:</p>
      <p style="font-size:32px;font-weight:700;letter-spacing:6px">{{ .Token }}</p>
-     <p>The code expires in 1 hour. If you didn't sign up, you can ignore this email.</p>
+     <p>The code expires in 15 minutes. If you didn't sign up, you can ignore this email.</p>
      ```
    - Optional: in **Authentication → Sign In / Providers → Email**, set **Email OTP Length** to `6` for a shorter code.
 5. Optional: in **Authentication → Rate Limits**, raise the email limit.
