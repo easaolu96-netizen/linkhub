@@ -2,6 +2,7 @@
 
 import { fail, type ActionResult } from "@/lib/action-result";
 import { getAuthUser } from "@/lib/auth";
+import { isWriteRateLimited, TOO_MANY_CHANGES } from "@/lib/security/limits";
 import { createClient } from "@/lib/supabase/server";
 import { themeSchema, type Theme } from "@/lib/theme";
 
@@ -14,6 +15,7 @@ export async function saveTheme(input: unknown): Promise<ActionResult<Theme>> {
 
   const supabase = await createClient();
   const { error } = await supabase.from("profiles").update({ theme: parsed.data }).eq("id", user.id);
+  if (isWriteRateLimited(error)) return fail(TOO_MANY_CHANGES);
   if (error) return fail("Couldn't save your appearance. Please try again.");
 
   return { ok: true, data: parsed.data, message: "Appearance saved" };

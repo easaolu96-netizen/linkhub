@@ -9,7 +9,7 @@ import { getCurrentProfile } from "@/lib/profile";
 import { rateLimit } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/request-info";
 import { audit } from "@/lib/security/audit";
-import { TOO_MANY_ATTEMPTS, withinLimits } from "@/lib/security/limits";
+import { isWriteRateLimited, TOO_MANY_ATTEMPTS, TOO_MANY_CHANGES, withinLimits } from "@/lib/security/limits";
 import { createClient } from "@/lib/supabase/server";
 import { claimUsernameSchema, usernameSchema } from "@/lib/validation/username";
 
@@ -74,6 +74,7 @@ export async function setUsername(input: unknown): Promise<ActionResult<{ userna
     .maybeSingle();
 
   if (error) {
+    if (isWriteRateLimited(error)) return fail(TOO_MANY_CHANGES);
     // 23505 = unique_violation (someone grabbed it first), 23514 = check_violation
     if (error.code === "23505") {
       return fail("That username was just taken. Try another.", {

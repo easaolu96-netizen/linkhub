@@ -36,7 +36,7 @@ This review reduces risk; it does **not** make the application "100% secure". Se
 | 14 | Email confirmation link built from the request's `Origin` header | Low | Fixed |
 | 15 | Auth callback accepted unused email-link types (recovery, magic link, invite) | Low | Fixed |
 | 16 | Impersonation-prone usernames not reserved (`support`, `security`, `linkhub`, …) | Low | Fixed |
-| 17 | Dependency advisory: `braces` stack-exhaustion DoS (dev tooling only, no patched version exists) | Low | Mitigated |
+| 17 | Dependency advisory: `braces` stack-exhaustion DoS (dev tooling only, no patched version exists) | Low | Fixed (gone after the 1 Nov 2026 update) |
 
 **No secrets were found** in the source code or anywhere in the git history:
 - Scanned for Supabase keys, JWTs, Resend keys, Google OAuth secrets, private keys and database passwords.
@@ -227,6 +227,24 @@ No destructive tests were run against external systems. All probes used temporar
 
 ---
 
+## Follow-up review (1 Nov 2026)
+
+| # | Finding | Severity | Status |
+|---|---|---|---|
+| F1 | Image optimizer usable as a proxy for remote images | Medium | Fixed (`remotePatterns: []`) |
+| F2 | Share images rendered uncached on every request | Medium | Fixed (cached, plus 60/min per-IP limit in `proxy.ts`) |
+| F3 | Supabase minimum password length below the app's | Low | Fixed (dashboard: 8) |
+| F4 | No CAPTCHA on email auth | Medium | Fixed (Cloudflare Turnstile, enforced by Supabase) |
+| F5 | Click and share-image limits only per server instance | Low | Mitigated (Vercel Firewall rule) |
+| F6 | No limit on how often a signed-in user writes links/profile, including directly through the database API | Low–Medium | Fixed: statement-level triggers in `20261101000000_write_rate_limits.sql`, 300 link writes and 120 profile updates per 10 min per user. Verified: update 121 is rejected with hint `rate_limited`; service-role writes are not limited |
+| F7 | Shared DB rate limiter failed open on errors | Low | Fixed (fails closed; errors logged) |
+| F8 | Seed script defaulted to a known demo password | Low | Fixed (random password unless `SEED_PASSWORD` is set) |
+| F9 | Dependency advisories, including **critical** Next.js RCE advisories (GHSA-2464-fhr4-w9xw, GHSA-673q-mjm6-r5xr), a Server Actions DoS (GHSA-p3m5-59mp-jv5r) and a zod memory DoS (GHSA-mrhx-c7xc-m3w5) | **Critical** | Fixed: `next` 16.4.3, `zod` 4.6.6, `npm audit fix`. Critical/high: 0; `npm audit --omit=dev`: 0 |
+
+LinkHub was not affected by the two Next.js RCEs in practice: the image optimizer accepts no remote images and SVG isn't enabled, and `use cache` isn't used. The upgrade was applied anyway.
+
+---
+
 ## Remaining risks
 
 | # | Risk | Notes / mitigation |
@@ -235,14 +253,14 @@ No destructive tests were run against external systems. All probes used temporar
 | R2 | **Session cookies are readable by JavaScript** (Supabase design). | An XSS bug would expose the session. Mitigated by R1's controls, `Secure`, `SameSite=Lax`, and short-lived access tokens (1 h). |
 | R3 | **JWTs stay valid until expiry** (≤ 1 h) after logout or deletion. | Standard stateless JWT behaviour; RLS still applies and a deleted user's rows are gone. |
 | R4 | **The Supabase Auth API can be called directly** with the public key, bypassing the app's limits. | Supabase's own per-IP limits apply to the caller's real IP. Recommended dashboard settings are below. |
-| R5 | **The DB rate limiter fails open** if the database is unreachable. | Deliberate (availability over lockout); failures are logged. The click/view/callback/username-check limiters are per server instance. |
+| R5 | **The click/view/callback/username-check limiters are per server instance.** | The shared DB limiter now fails closed (see the follow-up review). Clicks and share images are also limited by a Vercel Firewall rule. |
 | R6 | **Per-email login limit can be used to lock an email out of password login** for ≤ 10 min. | Trade-off of brute-force protection; Google sign-in still works. |
-| R7 | **Click and view counts can be inflated** by distributed bots. | Bot filtering plus per-IP limits; consider Vercel Firewall / BotID. |
+| R7 | **Click and view counts can be inflated** by distributed bots. | Bot filtering, per-IP limits and a Vercel Firewall rate rule; consider BotID. |
 | R8 | **No password-reset flow and no MFA.** | Feature gaps. When password reset is added, apply the same rate limits and audit events. |
 | R9 | **The audit log contains personal data** (emails, IPs). | Restricted to the service role; purge with `purge_old_audit_logs(180)` (schedule it). |
-| R10 | **Development and production share one Supabase project.** | Test scripts create and delete temporary users in production. The seed script's demo account uses a known password unless `SEED_PASSWORD` is set. |
+| R10 | **Development and production share one Supabase project.** | Test scripts create and delete temporary users in production. The seed script now generates a random demo password unless `SEED_PASSWORD` is set. |
 | R11 | **The stale-session path of the re-authentication check is not tested end to end** (it would need a session over 2 h old). | The logic is small and code-reviewed; the fresh-session path is tested. |
-| R12 | **`braces` dev-only advisory** has no upstream fix. | Re-check `npm audit` when the shadcn CLI / eslint-config-next update. |
+| R12 | **Low/moderate advisories in dev-only tooling** (ESLint plugins, shadcn CLI). | Not shipped to the site; `npm audit --omit=dev` reports 0. npm's suggested fix is a major ESLint downgrade, so it's not applied. |
 
 ---
 
@@ -252,14 +270,14 @@ No destructive tests were run against external systems. All probes used temporar
    - ✅ **Done (1 Nov 2026):** minimum password length **8**, matching the app. Verified: direct API sign-ups with 6- or 7-character passwords are rejected as weak.
    - ✅ **Done:** **Secure email change**, **Secure password change** and **Require current password when updating** are all on, so a hijacked session can't silently change the account's email or password through the API.
    - ⏳ **Leaked-password protection:** needs the Pro plan.
-   - ✅ **CAPTCHA** (Cloudflare Turnstile) on email sign-up, login and resend-code. The widget (`components/auth/turnstile.tsx`) sends a single-use token with each request, and Supabase verifies it against Cloudflare using the secret key (stored only in the Supabase dashboard). The CSP allows `https://challenges.cloudflare.com` for `script-src` and `frame-src` only. Google sign-in is unaffected. Supabase's CAPTCHA protection must stay switched on, because without it the tokens are not checked. (Status: app code done; turned on in Supabase once the deploy is live.)
+   - ✅ **CAPTCHA** (Cloudflare Turnstile) on email sign-up, login and resend-code. The widget (`components/auth/turnstile.tsx`) sends a single-use token with each request, and Supabase verifies it against Cloudflare using the secret key (stored only in the Supabase dashboard). The CSP allows `https://challenges.cloudflare.com` for `script-src` and `frame-src` only. Google sign-in is unaffected. Supabase's CAPTCHA protection must stay switched on, because without it the tokens are not checked. **Done (1 Nov 2026):** verified that direct API logins and sign-ups without a token, or with a fake one, are rejected with `captcha_failed`.
    - ✅ **Done:** **email OTP expiry** is short. It's set to **15 minutes (900 s)**, which is short enough to limit a code read later from a compromised inbox and long enough for slow email delivery. Brute force is already covered by the 8-digit code and the app's 8-attempts-per-15-minutes limit.
 2. **Schedule audit-log retention:** run `select public.purge_old_audit_logs(180);` monthly, e.g. from Supabase scheduled jobs / `pg_cron`.
 3. **Monitor `audit_logs`** for spikes in `login.failed`, `*.rate_limited` and `email.verify_failed`.
 4. **Separate environments:** use a second Supabase project for development and testing.
 5. **Vercel:**
    - keep Deployment Protection on preview URLs
-   - consider the Vercel Firewall (rate rules, bot protection) for `/api/click/*` and `/[username]`
+   - ✅ **Done:** Vercel Firewall rate rule: 60 requests per 60 s per IP on `/api/click/*` and `*/opengraph-image` (verified: request 61 gets `429`, `x-vercel-mitigated: deny`)
    - enable 2FA on the Vercel, Supabase, GitHub, Google Cloud and Resend accounts
 6. **Rotate keys** if a laptop or any of those accounts is ever compromised. There's no known exposure today.
 7. **Keep dependencies current** (Next.js, Supabase libraries), and run `npm audit --omit=dev` in CI.

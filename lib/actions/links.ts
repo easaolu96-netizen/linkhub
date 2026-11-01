@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { fail, type ActionResult } from "@/lib/action-result";
 import { getAuthUser } from "@/lib/auth";
+import { isWriteRateLimited, TOO_MANY_CHANGES } from "@/lib/security/limits";
 import { createClient } from "@/lib/supabase/server";
 import type { Tables } from "@/lib/supabase/database.types";
 import {
@@ -34,6 +35,7 @@ export async function createLink(input: unknown): Promise<ActionResult<Link>> {
   });
 
   if (error) {
+    if (isWriteRateLimited(error)) return fail(TOO_MANY_CHANGES);
     if (error.hint === "max_links") return fail(`You can have up to ${MAX_LINKS} links.`);
     return fail("Couldn't add the link. Please try again.");
   }
@@ -60,6 +62,7 @@ export async function updateLink(input: unknown): Promise<ActionResult<Link>> {
     .select("*")
     .maybeSingle();
 
+  if (isWriteRateLimited(error)) return fail(TOO_MANY_CHANGES);
   if (error) return fail("Couldn't save the link. Please try again.");
   if (!data) return fail("Link not found.");
   return { ok: true, data };
@@ -79,6 +82,7 @@ export async function deleteLink(id: unknown): Promise<ActionResult> {
     .eq("id", parsed.data)
     .eq("user_id", user.id);
 
+  if (isWriteRateLimited(error)) return fail(TOO_MANY_CHANGES);
   if (error) return fail("Couldn't delete the link. Please try again.");
   if (!count) return fail("Link not found.");
   return { ok: true, data: undefined, message: "Link deleted" };
@@ -94,6 +98,7 @@ export async function reorderLinks(ids: unknown): Promise<ActionResult> {
   const supabase = await createClient();
   // Runs as the user (security invoker), so it can only touch their own links.
   const { error } = await supabase.rpc("reorder_links", { link_ids: parsed.data });
+  if (isWriteRateLimited(error)) return fail(TOO_MANY_CHANGES);
   if (error) return fail("Couldn't save the new order. Please try again.");
   return { ok: true, data: undefined };
 }

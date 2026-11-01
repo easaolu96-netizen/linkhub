@@ -27,6 +27,16 @@ export type LimitName = keyof typeof LIMITS;
 
 export const TOO_MANY_ATTEMPTS = "Too many attempts. Please wait a few minutes and try again.";
 
+export const TOO_MANY_CHANGES = "You're making changes very quickly. Please wait a few minutes and try again.";
+
+/**
+ * True when the database's per-user write limit on links/profiles stopped the
+ * query (trigger in migration 20261101000000_write_rate_limits.sql).
+ */
+export function isWriteRateLimited(error: { hint?: string | null } | null) {
+  return error?.hint === "rate_limited";
+}
+
 function hashSubject(name: LimitName, subject: string) {
   const secret = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "linkhub";
   return createHmac("sha256", secret).update(`${name}|${subject.trim().toLowerCase()}`).digest("base64url");
@@ -43,9 +53,12 @@ async function consume(name: LimitName, subject: string): Promise<boolean> {
     if (error) throw error;
     return data === true;
   } catch (error) {
-    // Fail open: a database hiccup shouldn't lock every user out. Logged for follow-up.
+    // Fail closed: if the limit can't be checked, refuse rather than let an
+    // attacker get unlimited attempts while the check is broken. These are all
+    // sensitive actions that also need the database, so an outage blocks them
+    // anyway; a misconfiguration shows up loudly instead of silently.
     console.error(`[rate-limit] check "${name}" failed:`, error instanceof Error ? error.message : error);
-    return true;
+    return false;
   }
 }
 

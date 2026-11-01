@@ -4,7 +4,7 @@ import { z } from "zod";
 import { fail, type ActionResult } from "@/lib/action-result";
 import { getAuthUser } from "@/lib/auth";
 import { audit } from "@/lib/security/audit";
-import { TOO_MANY_ATTEMPTS, withinLimits } from "@/lib/security/limits";
+import { isWriteRateLimited, TOO_MANY_ATTEMPTS, TOO_MANY_CHANGES, withinLimits } from "@/lib/security/limits";
 import type { Socials } from "@/lib/socials";
 import { createClient } from "@/lib/supabase/server";
 import { avatarPathSchema, profileUpdateSchema } from "@/lib/validation/profile";
@@ -24,6 +24,7 @@ export async function updateProfile(input: unknown): Promise<
 
   const supabase = await createClient();
   const { error } = await supabase.from("profiles").update(parsed.data).eq("id", user.id);
+  if (isWriteRateLimited(error)) return fail(TOO_MANY_CHANGES);
   if (error) return fail("Couldn't save your profile. Please try again.");
 
   return { ok: true, data: parsed.data, message: "Profile saved" };
@@ -58,6 +59,7 @@ export async function setAvatar(path: unknown): Promise<ActionResult<{ avatar_ur
 
   const avatar_url = storage.getPublicUrl(parsed.data).data.publicUrl;
   const { error } = await supabase.from("profiles").update({ avatar_url }).eq("id", user.id);
+  if (isWriteRateLimited(error)) return fail(TOO_MANY_CHANGES);
   if (error) return fail("Couldn't save your avatar. Please try again.");
 
   await cleanUpAvatars(supabase, user.id, parsed.data);
@@ -71,6 +73,7 @@ export async function removeAvatar(): Promise<ActionResult> {
 
   const supabase = await createClient();
   const { error } = await supabase.from("profiles").update({ avatar_url: null }).eq("id", user.id);
+  if (isWriteRateLimited(error)) return fail(TOO_MANY_CHANGES);
   if (error) return fail("Couldn't remove your avatar. Please try again.");
 
   await cleanUpAvatars(supabase, user.id);

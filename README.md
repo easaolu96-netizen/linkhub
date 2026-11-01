@@ -153,7 +153,7 @@ npm run db:seed
 
 This creates (or recreates) a confirmed account:
 
-- **Login:** `demo@example.com` / `linkhub-demo-123`
+- **Login:** `demo@example.com`, with a random password that the script prints when it finishes (or your own via `SEED_PASSWORD`)
 - **Public page:** `/demo`, with a gradient theme, socials and 6 links (one hidden)
 - **Analytics:** about 35 days of page views and clicks, so the Analytics tab has data
 

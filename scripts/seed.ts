@@ -6,7 +6,10 @@
  *
  * Safe to re-run: the demo user is deleted and recreated each time.
  * Optional env vars: SEED_EMAIL, SEED_PASSWORD, SEED_USERNAME.
+ * Without SEED_PASSWORD a random password is generated and printed at the end
+ * (never a fixed default: this script may run against the production project).
  */
+import { randomBytes } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "../lib/supabase/database.types";
 
@@ -18,7 +21,7 @@ if (!url || !serviceKey) {
 }
 
 const EMAIL = process.env.SEED_EMAIL ?? "demo@example.com";
-const PASSWORD = process.env.SEED_PASSWORD ?? "linkhub-demo-123";
+const PASSWORD = process.env.SEED_PASSWORD || randomBytes(18).toString("base64url");
 const USERNAME = process.env.SEED_USERNAME ?? "demo";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
