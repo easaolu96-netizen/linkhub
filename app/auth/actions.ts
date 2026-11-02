@@ -4,14 +4,20 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { fail, type ActionResult } from "@/lib/action-result";
-import { getAuthUser } from "@/lib/auth";
+import { getAuthUser, type AuthUser } from "@/lib/auth";
 import { SITE_URL } from "@/lib/env";
 import { getClientIp } from "@/lib/request-info";
 import { safeRedirectPath } from "@/lib/safe-redirect";
 import { audit } from "@/lib/security/audit";
 import { TOO_MANY_ATTEMPTS, withinLimits } from "@/lib/security/limits";
 import { createClient } from "@/lib/supabase/server";
-import { emailCodeSchema, emailSchema, loginSchema, signupSchema } from "@/lib/validation/auth";
+import {
+  emailCodeSchema,
+  emailSchema,
+  loginSchema,
+  setPasswordSchema,
+  signupSchema,
+} from "@/lib/validation/auth";
 
 // Sign-in goes through this server, so Supabase's own per-IP limits only see
 // the server's address. These actions therefore apply their own limits per
@@ -83,7 +89,11 @@ export async function login(
   }
 
   await audit("login.succeeded", { userId: data.user.id, email, metadata: { method: "password" } });
-  redirect(safeRedirectPath(next));
+  const destination = safeRedirectPath(next);
+  if (data.user.factors?.some((f) => f.status === "verified")) {
+    redirect(`/login/mfa?next=${encodeURIComponent(destination)}`);
+  }
+  redirect(destination);
 }
 
 export async function signup(
@@ -170,6 +180,98 @@ export async function resendEmailCode(email: unknown, captchaToken?: unknown): P
   if (error) return fail(friendlyAuthError(error.message));
   await audit("email.code_resent", { email: parsed.data });
   return { ok: true, data: undefined, message: "A new code is on its way." };
+}
+
+// ---------------------------------------------------------------------
+// Password reset: email → 8-digit code → new password.
+// ---------------------------------------------------------------------
+
+const RESET_SENT = "If that email has an account, a reset code is on its way.";
+
+/** Step 1: email a reset code. Same answer whether or not the account exists. */
+export async function requestPasswordReset(email: unknown, captchaToken?: unknown): Promise<ActionResult> {
+  const parsed = emailSchema.safeParse(email);
+  if (!parsed.success) return fail("Enter a valid email address.");
+
+  if (!(await withinLimits([["resetIp", await clientIp()], ["resetEmail", parsed.data]]))) {
+    await audit("password.reset_rate_limited", { email: parsed.data });
+    return fail(TOO_MANY_ATTEMPTS);
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.resetPasswordForEmail(parsed.data, captchaOption(captchaToken));
+  if (error) console.error("[auth] password reset request failed:", error.code ?? error.status);
+  // Only surface errors that don't reveal whether the account exists.
+  if (error && /captcha|rate limit|too many|security purposes/i.test(error.message)) {
+    return fail(friendlyAuthError(error.message));
+  }
+  await audit("password.reset_requested", { email: parsed.data });
+  return { ok: true, data: undefined, message: RESET_SENT };
+}
+
+/**
+ * Step 2: check the code. On success the user has a short-lived signed-in
+ * session; `mfaRequired` means they must enter their authenticator code before
+ * Supabase will accept a new password.
+ */
+export async function verifyResetCode(input: unknown): Promise<ActionResult<{ mfaRequired: boolean }>> {
+  const parsed = emailCodeSchema.safeParse(input);
+  if (!parsed.success) {
+    return fail("Enter the code from the email.", z.flattenError(parsed.error).fieldErrors);
+  }
+  const { email, code } = parsed.data;
+
+  if (!(await withinLimits([["resetVerifyIp", await clientIp()], ["resetVerifyEmail", email]]))) {
+    await audit("password.reset_rate_limited", { email, metadata: { step: "verify" } });
+    return fail(TOO_MANY_ATTEMPTS);
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.verifyOtp({ email, token: code, type: "recovery" });
+  if (error) {
+    await audit("password.reset_code_failed", { email });
+    return fail(friendlyAuthError(error.message));
+  }
+  await audit("password.reset_code_verified", { userId: data.user?.id, email });
+  const mfaRequired = data.user?.factors?.some((f) => f.status === "verified") ?? false;
+  return { ok: true, data: { mfaRequired } };
+}
+
+/** A new password may be set only shortly after proving inbox access with a code. */
+const SET_PASSWORD_WINDOW_MS = 15 * 60 * 1000;
+
+function canSetPassword(user: AuthUser) {
+  return (
+    user.emailCodeVerifiedAt !== null &&
+    Date.now() - user.emailCodeVerifiedAt.getTime() <= SET_PASSWORD_WINDOW_MS
+  );
+}
+
+/** Step 3: set the new password, sign out every other device, go to the dashboard. */
+export async function setNewPassword(input: unknown): Promise<ActionResult> {
+  const user = await getAuthUser();
+  if (!user || !canSetPassword(user)) {
+    return fail("Your reset session has expired. Please request a new code.");
+  }
+
+  const parsed = setPasswordSchema.safeParse(input);
+  if (!parsed.success) {
+    return fail("Please fix the errors below.", z.flattenError(parsed.error).fieldErrors);
+  }
+  if (!(await withinLimits([["passwordSet", user.id]]))) return fail(TOO_MANY_ATTEMPTS);
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.updateUser({ password: parsed.data.password });
+  if (error) {
+    if (error.code === "same_password") return fail("Choose a password you haven't used for this account.");
+    if (error.code === "insufficient_aal") return fail("Enter your authenticator code first.");
+    return fail(friendlyAuthError(error.message));
+  }
+
+  // Anyone who got into the account with the old password is logged out.
+  await supabase.auth.signOut({ scope: "others" });
+  await audit("password.changed", { userId: user.id, email: user.email, metadata: { via: "reset" } });
+  redirect("/dashboard");
 }
 
 export async function signOut() {

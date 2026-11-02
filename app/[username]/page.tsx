@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { notFound, permanentRedirect } from "next/navigation";
 import { after } from "next/server";
 import { ProfileView } from "@/components/profile/profile-view";
-import { recordPageView } from "@/lib/analytics";
+import { recordPageView, visitorHash } from "@/lib/analytics";
 import { getAuthUser } from "@/lib/auth";
 import { getPublicProfile } from "@/lib/public-profile";
 import { rateLimit } from "@/lib/rate-limit";
@@ -58,8 +58,9 @@ export default async function PublicProfilePage({ params }: Props) {
     viewer?.id !== profile.id &&
     !isBot(userAgent) &&
     !isPrefetch(h) &&
-    // At most 1 view per visitor per profile per 30 s (stops refresh-spam),
-    // and 60 views per IP per minute overall.
+    // Cheap first filter per server instance (the database then keeps at most
+    // one view per visitor per profile per day): stops refresh-spam early,
+    // and caps 60 views per IP per minute overall.
     rateLimit(`view:${ip}:${profile.id}`, 1, 30_000) &&
     rateLimit(`views:${ip}`, 60, 60_000);
 
@@ -67,7 +68,8 @@ export default async function PublicProfilePage({ params }: Props) {
     const referrer = getReferrerOrigin(h, h.get("host"));
     const country = getCountry(h);
     // Runs after the HTML is sent, so tracking never slows the page down.
-    after(() => recordPageView({ profileId: profile.id, referrer, country }));
+    const visitor = visitorHash(ip, userAgent);
+    after(() => recordPageView({ profileId: profile.id, referrer, country, visitorHash: visitor }));
   }
 
   return (

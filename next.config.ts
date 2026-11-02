@@ -1,43 +1,10 @@
 import type { NextConfig } from "next";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL)
-  : null;
-const supabaseOrigin = supabaseUrl?.origin ?? "https://*.supabase.co";
-const isDev = process.env.NODE_ENV !== "production";
-
-/**
- * Content-Security-Policy.
- * - Scripts/styles: same-origin only. Next.js still needs 'unsafe-inline' for
- *   its inline hydration scripts unless every page is rendered dynamically with
- *   a per-request nonce (documented trade-off in SECURITY-AUDIT.md).
- * - Network: only this site and the Supabase project (auth + storage uploads).
- * - Images: this site, Supabase Storage avatars, Google profile photos.
- * - Cloudflare Turnstile (CAPTCHA on the auth forms) loads its script and
- *   runs its check in an iframe from challenges.cloudflare.com.
- * - No plugins, no other framing, no foreign form targets, no <base> hijacking.
- */
-const turnstileOrigin = "https://challenges.cloudflare.com";
-
-const csp = [
-  "default-src 'self'",
-  `script-src 'self' 'unsafe-inline' ${turnstileOrigin}${isDev ? " 'unsafe-eval'" : ""}`,
-  "style-src 'self' 'unsafe-inline'",
-  `img-src 'self' data: blob: ${supabaseOrigin} https://lh3.googleusercontent.com`,
-  "font-src 'self' data:",
-  `connect-src 'self' ${supabaseOrigin}${isDev ? " ws://localhost:* http://localhost:*" : ""}`,
-  "media-src 'none'",
-  "object-src 'none'",
-  `frame-src ${turnstileOrigin}`,
-  "frame-ancestors 'none'",
-  "base-uri 'self'",
-  "form-action 'self'",
-  "manifest-src 'self'",
-  "worker-src 'self' blob:",
-].join("; ");
+// The Content-Security-Policy is set per request in proxy.ts (it needs a
+// fresh nonce each time); see lib/security/csp.ts. API routes and static
+// files don't render HTML, so they only get the headers below.
 
 const securityHeaders = [
-  { key: "Content-Security-Policy", value: csp },
   // Force HTTPS for two years (also covers subdomains of the deployment host).
   { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" },
   // Legacy frame protection for older browsers (CSP frame-ancestors is the modern one).

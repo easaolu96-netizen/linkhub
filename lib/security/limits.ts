@@ -12,12 +12,23 @@ import { createAdminClient } from "@/lib/supabase/admin";
 export const LIMITS = {
   loginIp: { limit: 20, windowSeconds: 10 * 60 },
   loginEmail: { limit: 8, windowSeconds: 10 * 60 },
-  signupIp: { limit: 10, windowSeconds: 60 * 60 },
+  // Per-IP email-sending limits stay well under the project-wide cap of 30
+  // emails/hour (Supabase → Auth → Rate Limits): one address can trigger at
+  // most 15 (sign-up + resend + reset), never the whole budget.
+  signupIp: { limit: 5, windowSeconds: 60 * 60 },
   signupEmail: { limit: 3, windowSeconds: 60 * 60 },
   verifyIp: { limit: 30, windowSeconds: 15 * 60 },
   verifyEmail: { limit: 8, windowSeconds: 15 * 60 },
-  resendIp: { limit: 10, windowSeconds: 60 * 60 },
+  resendIp: { limit: 5, windowSeconds: 60 * 60 },
   resendEmail: { limit: 4, windowSeconds: 60 * 60 },
+  resetIp: { limit: 5, windowSeconds: 60 * 60 },
+  resetEmail: { limit: 4, windowSeconds: 60 * 60 },
+  resetVerifyIp: { limit: 30, windowSeconds: 15 * 60 },
+  resetVerifyEmail: { limit: 8, windowSeconds: 15 * 60 },
+  passwordSet: { limit: 10, windowSeconds: 60 * 60 },
+  mfaVerifyIp: { limit: 30, windowSeconds: 15 * 60 },
+  mfaVerifyUser: { limit: 8, windowSeconds: 15 * 60 },
+  mfaEnroll: { limit: 10, windowSeconds: 60 * 60 },
   usernameChange: { limit: 10, windowSeconds: 60 * 60 },
   avatarChange: { limit: 20, windowSeconds: 60 * 60 },
   accountDelete: { limit: 5, windowSeconds: 60 * 60 },

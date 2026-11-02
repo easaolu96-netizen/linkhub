@@ -54,6 +54,7 @@ export type Database = {
           link_id: string
           profile_id: string
           referrer: string | null
+          visitor_hash: string | null
         }
         Insert: {
           created_at?: string
@@ -61,6 +62,7 @@ export type Database = {
           link_id: string
           profile_id: string
           referrer?: string | null
+          visitor_hash?: string | null
         }
         Update: {
           created_at?: string
@@ -68,6 +70,7 @@ export type Database = {
           link_id?: string
           profile_id?: string
           referrer?: string | null
+          visitor_hash?: string | null
         }
         Relationships: [
           {
@@ -134,6 +137,7 @@ export type Database = {
           id: number
           profile_id: string
           referrer: string | null
+          visitor_hash: string | null
         }
         Insert: {
           country?: string | null
@@ -141,6 +145,7 @@ export type Database = {
           id?: never
           profile_id: string
           referrer?: string | null
+          visitor_hash?: string | null
         }
         Update: {
           country?: string | null
@@ -148,6 +153,7 @@ export type Database = {
           id?: never
           profile_id?: string
           referrer?: string | null
+          visitor_hash?: string | null
         }
         Relationships: [
           {
@@ -250,6 +256,7 @@ export type Database = {
         }[]
       }
       is_reserved_username: { Args: { name: string }; Returns: boolean }
+      mfa_satisfied: { Args: never; Returns: boolean }
       my_avatar_object_count: { Args: never; Returns: number }
       purge_old_audit_logs: { Args: { keep_days?: number }; Returns: number }
       reorder_links: { Args: { link_ids: string[] }; Returns: undefined }

@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "@/lib/zod";
 
 export const LINK_TITLE_MAX = 100;
 export const LINK_URL_MAX = 2048;

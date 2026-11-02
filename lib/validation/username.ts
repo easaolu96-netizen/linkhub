@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "@/lib/zod";
 
 // Keep in sync with public.is_reserved_username() in supabase/migrations.
 export const RESERVED_USERNAMES: ReadonlySet<string> = new Set([

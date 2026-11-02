@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import { Geist, Geist_Mono, Instrument_Serif, Inter, Playfair_Display, Poppins, Space_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -49,7 +50,12 @@ export const metadata: Metadata = {
     "Create a beautiful link-in-bio page in minutes. Share all your links, socials and content from one simple URL.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  // Render every page per request: the strict CSP gives each response a new
+  // nonce (proxy.ts), and a page built ahead of time would carry none, so
+  // the browser would block its scripts.
+  await connection();
+
   const fontVariables = [geistSans, geistMono, instrumentSerif, inter, poppins, playfair, spaceMono]
     .map((font) => font.variable)
     .join(" ");

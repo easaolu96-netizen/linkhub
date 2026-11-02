@@ -90,7 +90,17 @@ export function AuthForm({ mode, next }: { mode: Mode; next?: string }) {
           </Field>
 
           <Field data-invalid={Boolean(errors.password)}>
-            <FieldLabel htmlFor="password">Password</FieldLabel>
+            <div className="flex items-center justify-between gap-2">
+              <FieldLabel htmlFor="password">Password</FieldLabel>
+              {isLogin && (
+                <Link
+                  href="/reset-password"
+                  className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+                >
+                  Forgot password?
+                </Link>
+              )}
+            </div>
             <Input
               id="password"
               type="password"

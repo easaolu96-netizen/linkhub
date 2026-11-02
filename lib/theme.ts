@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "@/lib/zod";
 import type { Json } from "@/lib/supabase/database.types";
 
 export const BUTTON_STYLES = ["filled", "outline", "rounded", "pill", "shadow"] as const;

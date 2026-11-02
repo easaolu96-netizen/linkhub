@@ -3,14 +3,16 @@ import { SignOutButton } from "@/components/auth/sign-out-button";
 import { PageHeader, Section } from "@/components/dashboard/page-header";
 import { DeleteAccount } from "@/components/dashboard/settings/delete-account";
 import { ShareSettings } from "@/components/dashboard/settings/share-settings";
+import { TwoFactorSettings } from "@/components/dashboard/settings/two-factor-settings";
 import { UsernameSettings } from "@/components/dashboard/settings/username-settings";
+import { getMfaEnabled } from "@/lib/actions/mfa";
 import { requireUser } from "@/lib/auth";
 import { SITE_URL } from "@/lib/env";
 
 export const metadata: Metadata = { title: "Settings" };
 
 export default async function SettingsPage() {
-  const user = await requireUser();
+  const [user, mfaEnabled] = await Promise.all([requireUser(), getMfaEnabled()]);
 
   return (
     <>
@@ -28,6 +30,9 @@ export default async function SettingsPage() {
           </p>
           <SignOutButton />
         </div>
+      </Section>
+      <Section id="two-factor-heading" title="Two-factor sign-in">
+        <TwoFactorSettings enabled={mfaEnabled} />
       </Section>
       <Section id="danger-heading" title="Delete account" tone="danger">
         <DeleteAccount />

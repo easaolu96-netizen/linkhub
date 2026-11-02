@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "@/lib/zod";
 import { normalizeSocial, SOCIAL_KEYS, type SocialKey, type Socials } from "@/lib/socials";
 
 export const DISPLAY_NAME_MAX = 60;

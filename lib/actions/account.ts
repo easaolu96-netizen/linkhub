@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { fail, type ActionResult } from "@/lib/action-result";
-import { getAuthUser, isRecentlyAuthenticated } from "@/lib/auth";
+import { getAuthUser, isMfaSatisfied, isRecentlyAuthenticated } from "@/lib/auth";
 import { getCurrentProfile } from "@/lib/profile";
 import { audit } from "@/lib/security/audit";
 import { TOO_MANY_ATTEMPTS, withinLimits } from "@/lib/security/limits";
@@ -35,6 +35,11 @@ export async function deleteAccount(confirmation: unknown): Promise<ActionResult
     return fail("For your security, please log in again before deleting your account.", {
       reauth: ["required"],
     });
+  }
+
+  // The deletion below uses the service role (no RLS), so check 2FA here.
+  if (!(await isMfaSatisfied(user))) {
+    return fail("Enter your two-factor code first: log out and back in.", { reauth: ["required"] });
   }
 
   const admin = createAdminClient();

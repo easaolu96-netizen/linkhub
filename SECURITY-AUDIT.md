@@ -249,16 +249,16 @@ LinkHub was not affected by the two Next.js RCEs in practice: the image optimize
 
 | # | Risk | Notes / mitigation |
 |---|---|---|
-| R1 | **CSP allows `'unsafe-inline'` scripts.** | Next.js injects inline hydration scripts. A nonce-based CSP would force every page (including the static landing page) to render per request. XSS is mitigated by React's escaping and the absence of raw-HTML rendering of user data. Consider nonces if traffic and cost allow. |
+| R1 | **CSP still allows inline `style` attributes** (`style-src 'unsafe-inline'`). | Scripts are now nonce-only with `'strict-dynamic'` (no `'unsafe-inline'`; verified: 0 violations on every page type, and Turnstile, hydration and the dashboard work). Inline styles are needed for React `style` props and theme colours; style injection can't run code. |
 | R2 | **Session cookies are readable by JavaScript** (Supabase design). | An XSS bug would expose the session. Mitigated by R1's controls, `Secure`, `SameSite=Lax`, and short-lived access tokens (1 h). |
 | R3 | **JWTs stay valid until expiry** (≤ 1 h) after logout or deletion. | Standard stateless JWT behaviour; RLS still applies and a deleted user's rows are gone. |
 | R4 | **The Supabase Auth API can be called directly** with the public key, bypassing the app's limits. | Supabase's own per-IP limits apply to the caller's real IP. Recommended dashboard settings are below. |
 | R5 | **The click/view/callback/username-check limiters are per server instance.** | The shared DB limiter now fails closed (see the follow-up review). Clicks and share images are also limited by a Vercel Firewall rule. |
 | R6 | **Per-email login limit can be used to lock an email out of password login** for ≤ 10 min. | Trade-off of brute-force protection; Google sign-in still works. |
-| R7 | **Click and view counts can be inflated** by distributed bots. | Bot filtering, per-IP limits and a Vercel Firewall rate rule; consider BotID. |
-| R8 | **No password-reset flow and no MFA.** | Feature gaps. When password reset is added, apply the same rate limits and audit events. |
+| R7 | **Counts can still be inflated by a botnet with many IPs.** | Counts are now unique per visitor (anonymous daily IP + user-agent hash) per profile/link per day, enforced by unique indexes, on top of bot filtering, per-IP limits and the Vercel Firewall rule. One machine can add at most one view per profile and one click per link per day. |
+| R8 | **2FA is optional, and there are no backup codes.** | Password reset (CAPTCHA, per-IP/per-email limits, audit events, signs out other devices) and optional TOTP 2FA (per-user/per-IP limits, audit events, enforced by RLS) are in place. A user who loses their authenticator needs an admin to remove the factor (Supabase dashboard → Authentication → Users → the user → remove the MFA factor). |
 | R9 | **The audit log contains personal data** (emails, IPs). | Restricted to the service role; purge with `purge_old_audit_logs(180)` (schedule it). |
-| R10 | **Development and production share one Supabase project.** | Test scripts create and delete temporary users in production. The seed script now generates a random demo password unless `SEED_PASSWORD` is set. |
+| R10 | **Development and production share one Supabase project** (free plan: 2 projects, both slots used). | Accepted for a one-person project. The seed script refuses to run against a hosted project without `SEED_ALLOW_REMOTE=yes` and uses a random password; tests use throwaway users that are deleted afterwards; migrations are dry-run first. Move to a local Supabase (`npx supabase start`, needs Docker) or a second project when more people work on it. |
 | R11 | **The stale-session path of the re-authentication check is not tested end to end** (it would need a session over 2 h old). | The logic is small and code-reviewed; the fresh-session path is tested. |
 | R12 | **Low/moderate advisories in dev-only tooling** (ESLint plugins, shadcn CLI). | Not shipped to the site; `npm audit --omit=dev` reports 0. npm's suggested fix is a major ESLint downgrade, so it's not applied. |
 

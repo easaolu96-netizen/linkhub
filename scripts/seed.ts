@@ -20,6 +20,18 @@ if (!url || !serviceKey) {
   process.exit(1);
 }
 
+// Development and production share one Supabase project (free plan), so
+// refuse to touch a hosted project unless that's explicitly confirmed.
+const isLocal = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(url.replace(/\/+$/, ""));
+if (!isLocal && process.env.SEED_ALLOW_REMOTE !== "yes") {
+  console.error(`
+⚠️  This would create/replace a demo account in the hosted project at
+   ${new URL(url).host}, which is your LIVE database.
+   If you really mean it, run:  SEED_ALLOW_REMOTE=yes npm run db:seed
+`);
+  process.exit(1);
+}
+
 const EMAIL = process.env.SEED_EMAIL ?? "demo@example.com";
 const PASSWORD = process.env.SEED_PASSWORD || randomBytes(18).toString("base64url");
 const USERNAME = process.env.SEED_USERNAME ?? "demo";

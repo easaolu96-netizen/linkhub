@@ -23,14 +23,16 @@ A "link in bio" app in the style of Linktree. People sign up, claim a username, 
 
 ## Features
 
-- **Auth:** email + password (confirmed with a code emailed to the user) and Google sign-in through Supabase Auth. `proxy.ts` protects `/dashboard` and `/onboarding`.
+- **Auth:** email + password (confirmed with a code emailed to the user) and Google sign-in through Supabase Auth, with Cloudflare Turnstile CAPTCHA on the email forms. `proxy.ts` protects `/dashboard` and `/onboarding`.
+  - **Password reset** at `/reset-password`: email → 8-digit code → new password. Other devices are signed out.
+  - **Optional two-factor sign-in** (authenticator app, TOTP), turned on in Settings. The database itself refuses to show or change a 2FA user's links, analytics or avatar until the code is entered.
 - **Username onboarding:** 3–30 characters (`a–z 0–9 _ -`), checked live as you type, with reserved words blocked. The rules are enforced in the browser, in the server actions and in Postgres.
 - **Dashboard:** a two-column editor with a live phone preview that collapses to a "Preview" button on mobile. It has five tabs:
   - **Links:** add (`https://` added automatically, only `http`, `https` and `mailto` allowed), inline edit, delete with confirmation, show/hide, drag-and-drop reordering (mouse, touch and keyboard), and a click count on each link.
   - **Profile:** display name, bio (160 characters with a counter), avatar upload (2 MB max, JPG/PNG/WebP, cropped to a square in the browser), and 8 social links.
   - **Appearance:** 8 preset themes plus custom background (solid or gradient), text colour, button style and colours, and font, with warnings when contrast is too low.
-  - **Analytics:** views, clicks and click-through rate for the last 7 or 30 days, a daily chart with a table view, and clicks per link.
-  - **Settings:** change username, copy your public link, download a QR code (PNG or SVG), and delete your account with a typed confirmation.
+  - **Analytics:** views, clicks and click-through rate for the last 7 or 30 days, a daily chart with a table view, and clicks per link. Counts are **unique per visitor per day** (an anonymous daily hash, enforced by the database), so refreshing or repeat-clicking can't inflate them.
+  - **Settings:** change username, copy your public link, download a QR code (PNG or SVG), turn two-factor sign-in on or off, and delete your account with a typed confirmation.
 - **Public page `/[username]`:**
   - Rendered on the server, using the owner's theme.
   - Every link goes through `/api/click/[id]`, which records the click and redirects with a 302.
@@ -159,6 +161,8 @@ This creates (or recreates) a confirmed account:
 
 The script is safe to re-run. You can override the details with `SEED_EMAIL`, `SEED_PASSWORD` and `SEED_USERNAME`.
 
+Development and production share one Supabase project (the free plan allows two projects), so the script **refuses to run against a hosted project** unless you confirm it: `SEED_ALLOW_REMOTE=yes npm run db:seed`. Against a local Supabase (`npx supabase start`) it runs without the flag.
+
 > ⚠️ Local development and production share **the same Supabase project**. Before launch, either delete the demo user (**Supabase → Authentication → Users**) or re-seed it with a private `SEED_PASSWORD`. Otherwise anyone could log in and edit `/demo`.
 
 ## Scripts
@@ -256,7 +260,16 @@ Supabase's built-in email service is only for testing. It sends very few emails 
      <p>The code expires in 15 minutes. If you didn't sign up, you can ignore this email.</p>
      ```
    - Optional: in **Authentication → Sign In / Providers → Email**, set **Email OTP Length** to `6` for a shorter code.
-5. Optional: in **Authentication → Rate Limits**, raise the email limit.
+5. **Make the password-reset email show the code too.** In **Templates → Reset password**:
+   - **Subject:** `Your LinkHub reset code: {{ .Token }}`
+   - **Body:**
+     ```html
+     <h2>Reset your LinkHub password</h2>
+     <p>Enter this code on the reset page:</p>
+     <p style="font-size:32px;font-weight:700;letter-spacing:6px">{{ .Token }}</p>
+     <p>The code expires in 15 minutes. If you didn't ask to reset your password, you can ignore this email.</p>
+     ```
+6. **Set the email rate limit.** In **Authentication → Rate Limits**, set **Rate limit for sending emails** to `30` per hour. This cap is shared by every sign-up, resend and reset email; when it's reached, Supabase refuses to send any more until the hour resets. LinkHub's own per-IP limits (5 sign-ups, 5 resends and 5 resets per hour, in `lib/security/limits.ts`) keep any one address to at most 15, so a single visitor can't use up the whole budget. Resend's free tier also caps you at about 100 emails a day.
 
 ### 7. Check the live site
 
@@ -283,7 +296,8 @@ See **[SECURITY-AUDIT.md](SECURITY-AUDIT.md)** for the full audit: findings, fix
 - URLs are normalised. Only `http`, `https` and `mailto` are allowed, checked by Zod, by a Postgres `CHECK` constraint, and again when a link is rendered and redirected.
 - Click and view endpoints are rate-limited per IP and per link or profile. The limiter is in memory (per server instance); for strict global limits, swap `lib/rate-limit.ts` for Upstash Redis.
 - Redirect targets after login are restricted to same-site paths, so login links can't send people to another website.
-- Security headers in `next.config.ts`: frame blocking (`X-Frame-Options` and CSP `frame-ancestors`), `nosniff`, `Referrer-Policy` and `Permissions-Policy`.
+- **Strict Content-Security-Policy** with a fresh nonce per request (`lib/security/csp.ts`, set in `proxy.ts`): only scripts carrying the nonce, and scripts they load, can run, with no `'unsafe-inline'`. This makes every page render per request (`connection()` in `app/layout.tsx`).
+- Other security headers in `next.config.ts`: HSTS, frame blocking (`X-Frame-Options`), `nosniff`, `Referrer-Policy`, `Permissions-Policy` and COOP.
 
 ## Troubleshooting
 
