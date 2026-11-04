@@ -176,6 +176,7 @@ Development and production share one Supabase project (the free plan allows two 
 | `npm run db:types` | Regenerate the TypeScript types from the live database |
 | `npm run db:verify` | Check env vars, tables, RLS and the storage bucket |
 | `npm run db:seed` | Create the demo account with sample data |
+| `npm run db:backup` | Export every table and the account list to `backups/<date>/` (git-ignored). The free plan has no downloadable backups, so run it weekly and keep the files private: they contain personal data |
 
 ---
 
