@@ -25,10 +25,12 @@ export function DashboardNav() {
             href={href}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "shrink-0 border-b-[1.5px] py-3 text-[15px] outline-none transition-colors focus-visible:text-foreground focus-visible:underline",
+              // The underline is a pseudo-element that draws in from the left.
+              "relative shrink-0 py-3 text-[15px] outline-none transition-colors focus-visible:text-foreground focus-visible:underline",
+              "after:absolute after:inset-x-0 after:bottom-0 after:h-[1.5px] after:origin-left after:bg-ink after:transition-transform after:duration-300 after:ease-out motion-reduce:after:transition-none",
               active
-                ? "border-ink font-medium text-foreground"
-                : "border-transparent text-muted-foreground hover:text-foreground",
+                ? "font-medium text-foreground after:scale-x-100"
+                : "text-muted-foreground after:scale-x-0 hover:text-foreground",
             )}
           >
             {label}
