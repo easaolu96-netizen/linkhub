@@ -309,7 +309,7 @@ Scope: the whole codebase on `main` (plus the unmerged `redesign-3d` landing cod
 | Path / directory traversal | PASS |
 | Brute force / credential stuffing | PASS |
 | Session hijacking (Secure, SameSite, nonce CSP, 1 h JWT) | PASS |
-| Session fixation / cookie tossing | PASS after S2 (live cookie name to verify after deploy) |
+| Session fixation / cookie tossing | PASS after S2 (deployed 4 Nov; owner confirmed login works on the live site) |
 | Clickjacking | PASS |
 | Open redirects | PASS |
 | Insecure file uploads | PASS after S1 |
@@ -324,7 +324,8 @@ Scope: the whole codebase on `main` (plus the unmerged `redesign-3d` landing cod
 | Secrets in git / browser bundle | PASS |
 | Dependencies | PASS for production; dev-only advisories accepted |
 | Backups | PARTIAL (manual export, S5) |
-| Supabase dashboard settings (redirect-URL allow-list, JWT expiry, refresh-token reuse window) | NOT TESTED: no Management API access |
+| Supabase redirect-URL allow-list | PASS (owner checked 4 Nov: only `https://linktree.kashdigit.com/**` and `http://localhost:3000/**`) |
+| Supabase JWT expiry / refresh-token reuse window | NOT TESTED: no Management API access |
 | OWASP ZAP crawl | NOT TESTED: tool unavailable |
 
 ### OWASP Top 10 (2021)
