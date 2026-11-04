@@ -30,6 +30,15 @@ export async function updateProfile(input: unknown): Promise<
   return { ok: true, data: parsed.data, message: "Profile saved" };
 }
 
+/** True if the bytes start with a JPEG, PNG or WebP file signature. */
+function isImageBytes(b: Uint8Array) {
+  const jpeg = b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff;
+  const png = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a].every((byte, i) => b[i] === byte);
+  const ascii = (from: number, to: number) => String.fromCharCode(...b.slice(from, to));
+  const webp = ascii(0, 4) === "RIFF" && ascii(8, 12) === "WEBP";
+  return jpeg || png || webp;
+}
+
 /** Delete every file in the user's avatar folder except `keep`. */
 async function cleanUpAvatars(supabase: Awaited<ReturnType<typeof createClient>>, userId: string, keep?: string) {
   const { data: files } = await supabase.storage.from(AVATAR_BUCKET).list(userId, { limit: 100 });
@@ -56,6 +65,14 @@ export async function setAvatar(path: unknown): Promise<ActionResult<{ avatar_ur
   const fileName = parsed.data.slice(user.id.length + 1);
   const { data: found } = await storage.list(user.id, { search: fileName, limit: 1 });
   if (!found?.some((f) => f.name === fileName)) return fail("Upload not found. Please try again.");
+
+  // Storage only checks the content type the browser *declared*. Check the
+  // real bytes before the file goes on a public page; delete impostors.
+  const { data: file } = await storage.download(parsed.data);
+  if (!file || !isImageBytes(new Uint8Array(await file.slice(0, 16).arrayBuffer()))) {
+    await storage.remove([parsed.data]);
+    return fail("That file isn't a valid JPG, PNG or WebP image.");
+  }
 
   const avatar_url = storage.getPublicUrl(parsed.data).data.publicUrl;
   const { error } = await supabase.from("profiles").update({ avatar_url }).eq("id", user.id);

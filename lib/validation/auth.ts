@@ -1,4 +1,5 @@
 import { z } from "@/lib/zod";
+import { weakPasswordReason } from "@/lib/validation/password";
 
 export const emailSchema = z
   .string()
@@ -18,14 +19,23 @@ const newPasswordSchema = z
   .min(8, "Use at least 8 characters")
   .max(72, "Password must be 72 characters or fewer");
 
-export const signupSchema = z.object({
-  email: emailSchema,
-  password: newPasswordSchema,
-});
+export const signupSchema = z
+  .object({
+    email: emailSchema,
+    password: newPasswordSchema,
+  })
+  .superRefine(({ email, password }, ctx) => {
+    const reason = weakPasswordReason(password, email);
+    if (reason) ctx.addIssue({ code: "custom", path: ["password"], message: reason });
+  });
 
 export const setPasswordSchema = z
   .object({ password: newPasswordSchema, confirm: z.string() })
-  .refine((v) => v.password === v.confirm, { path: ["confirm"], message: "Passwords don't match" });
+  .refine((v) => v.password === v.confirm, { path: ["confirm"], message: "Passwords don't match" })
+  .superRefine(({ password }, ctx) => {
+    const reason = weakPasswordReason(password);
+    if (reason) ctx.addIssue({ code: "custom", path: ["password"], message: reason });
+  });
 
 /** Code from the confirmation email (6 digits by default; Supabase allows up to 10). */
 export const emailCodeSchema = z.object({

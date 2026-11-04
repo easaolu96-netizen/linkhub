@@ -245,6 +245,109 @@ LinkHub was not affected by the two Next.js RCEs in practice: the image optimize
 
 ---
 
+## Third audit: full assessment (4 Nov 2026)
+
+Scope: the whole codebase on `main` (plus the unmerged `redesign-3d` landing code, which is client-only 3D with no user input), the Supabase database and storage rules, and the live deployment's transport security.
+
+### Tools run
+| Tool | What it checks | Result |
+|---|---|---|
+| Gitleaks 8.30.1 | Secrets in the whole git history (all branches) and the working folder | History: **0 leaks**. Working folder: only `.env.local` (git-ignored, never committed) |
+| OSV-Scanner 2.7.0 | Known vulnerabilities in every locked dependency | 3 packages, all **dev-only** (ESLint, shadcn CLI): deepmerge 4.3.1, minimatch 3.1.5 / 10.2.6; no fixed versions upstream |
+| npm audit | Same, npm advisory database | Production dependencies: **0**. All: 21 low/moderate, dev-only |
+| Semgrep 1.183 | Static analysis, 8 rule sets (JS, TS, React, Next.js, OWASP Top 10, secrets, SQL injection, XSS), 119 files | **0 findings** |
+| Custom DAST suite 1 | 34 attacks on the Supabase API with two throwaway users | 33 blocked; FU6 → S1 below |
+| Custom DAST suite 2 | 24 attacks on a production build (server actions called directly, as an attacker would) | 22 passed; the other 2 are test artefacts (explained below) |
+| Bundle secret scan | Server-only key and DB password searched in all 85 browser files | **0** |
+| OWASP ZAP | Dynamic crawl | **Not run**: needs Java or Docker, neither available. The custom suites cover the listed attacks, not a full crawl |
+
+### Findings
+| # | Finding | Severity | Status |
+|---|---|---|---|
+| S1 | Avatar files were checked only by the content type the browser *declared*: HTML labelled `image/jpeg` was accepted and could be set as a profile photo | Low–Medium | **Fixed**: `setAvatar` reads the first bytes and accepts only real JPEG/PNG/WebP signatures; impostors are deleted. Storage still accepts the upload itself (Supabase can't inspect content) but it can never be linked from a profile |
+| S2 | `kashdigit.com` serves a separate site that could plant a `Domain=kashdigit.com` cookie and fix a victim into an attacker's session (cookie tossing / session fixation) | Low–Medium | **Fixed**: on HTTPS the session cookie is `__Host-linkhub-auth`, which browsers only accept from this exact host (Secure, Path=/, no Domain). Everyone is signed out once when this ships |
+| S3 | Password policy was length-only (8+): `password1`, `qwertyuiop` were accepted. Supabase's leaked-password check needs the Pro plan | Medium | **Fixed**: sign-up and reset refuse ~75 of the most-breached 8+ character passwords, single repeated characters, and passwords containing the email's name (browser and server) |
+| S4 | Audit log (emails, IPs) was never purged automatically | Low | **Fixed**: `pg_cron` deletes entries older than 180 days on the 1st of each month (`20261104000000_audit_log_retention.sql`) |
+| S5 | No downloadable backups on the free plan: data loss would be unrecoverable | Medium | **Mitigated**: `npm run db:backup` exports every table and the account list to git-ignored `backups/`. Must be run regularly |
+| S6 | Patch releases available (Next.js 16.4.5, supabase-js 2.118.0); no known vulnerabilities in the installed versions | Info | **Updated** |
+| S7 | Some limits are per server instance (click, view, username check, OG image, auth callback) | Low | Accepted; clicks and share images are also limited by the Vercel Firewall rule |
+| S8 | `style-src 'unsafe-inline'` in the CSP | Info | Accepted (React `style` props); scripts are nonce-only |
+| S9 | Session cookies are readable by JavaScript (Supabase SSR design) | Info | Accepted; the strict nonce CSP is the mitigation |
+| S10 | `/api/click/<id>` redirects to whatever URL a user saved, so a malicious page can point anywhere (phishing) | Low | Accepted: it is the product. Only http/https/mailto; links resolve by id; abuse is a policy matter |
+| S11 | Dev-only dependency advisories (tools table) | Low | Accepted: never shipped; no upstream fix |
+
+**Totals: 11 findings. Critical 0, High 0, Medium 2 (S3, S5), Low–Medium 2 (S1, S2), Low 4, Info 3. Fixed or mitigated: 6. Accepted with rationale: 5. Unresolved: 0.**
+
+### Attack scenarios tested (PASS = attack blocked)
+- **Access control / IDOR:** another user's hidden link, editing, deleting, creating links as them, editing their profile, reordering their links, reading their analytics, analytics function scope: **8/8 PASS**.
+- **Mass assignment / privilege escalation:** changing `id`, `created_at`, a link's owner; inserting profiles; forging analytics or audit entries; reading audit and rate-limit tables; calling the rate-limit and log-purge functions; claiming `admin`: **11/11 PASS**.
+- **Injection:** SQL in filters and function arguments (stored as text), `javascript:` URLs, foreign avatar URLs: **4/4 PASS**. Stored XSS in name, bio, link titles and socials, on the public page and share image: **PASS** (0 dialogs, 0 injected elements).
+- **Anonymous access:** hidden links, writes, analytics, listing avatars: **4/4 PASS**.
+- **File upload:** other user's folder, HTML, SVG, path traversal, >2 MB: **5/5 PASS**; HTML disguised as JPEG: blocked at the app layer by S1.
+- **CSRF:** cross-site server-action call rejected (HTTP 500, invalid origin). A forged logout is also stopped by `SameSite=Lax`; the suite's own logout probe was redirected before reaching the action, so it is inconclusive on its own.
+- **Brute force / stuffing / flooding:** 9th guess on one account, 21st account from one IP, 6th sign-up, 6th reset email, 9th email-code guess all refused: **5/5 PASS**.
+- **Account enumeration:** password reset answers identically for existing and unknown emails (verified separately; the suite's check hit CAPTCHA first).
+- **Open redirect:** 9 known bypass payloads; auth callback with `next=//evil.com`: **PASS**.
+- **Path traversal / file disclosure:** `.env`, `.env.local`, `.git/config`, `package.json`, migrations, encoded `../`: **PASS** (none served).
+- **DoS inputs:** 2.5 MB action body refused in 21 ms; 20,000-character id refused (431): **PASS**.
+- **Information disclosure:** malformed action call returns a bare 400 (details only in server logs); no `X-Powered-By`: **PASS**.
+- **Headers / clickjacking / CORS:** CSP with nonce and `frame-ancestors 'none'`, HSTS, XFO, nosniff, Referrer-Policy, Permissions-Policy, COOP on pages and API; framing refused; no CORS for other origins: **PASS**.
+- **Live transport:** HTTP → HTTPS 308; HSTS 2 years incl. subdomains; TLS ≤ 1.1 refused: **PASS**.
+- **Sessions:** old refresh token rejected after logout; password reset signs out other devices; 2FA enforced in the database: **PASS**.
+- **Fix verification: 8/8 PASS** (disguised HTML refused and deleted, real JPEG still accepted, common and email-based passwords refused on sign-up and reset, strong password accepted, `__Host-` cookie settings). **Functional regression:** dashboard (5 tabs), public page, login, reset and landing all load correctly.
+
+### Security checklist
+| Area | Status |
+|---|---|
+| SQL injection | PASS |
+| XSS (stored, reflected, DOM) | PASS |
+| CSRF | PASS (framework origin check + SameSite=Lax) |
+| Broken authentication (CAPTCHA, limits, OTP expiry, 2FA) | PASS |
+| Broken access control / IDOR | PASS |
+| SSRF | PASS (avatar allow-list in app and DB; no other server fetches of user URLs) |
+| RCE / command injection | PASS (no eval, shell or dynamic code; Semgrep clean) |
+| Path / directory traversal | PASS |
+| Brute force / credential stuffing | PASS |
+| Session hijacking (Secure, SameSite, nonce CSP, 1 h JWT) | PASS |
+| Session fixation / cookie tossing | PASS after S2 (live cookie name to verify after deploy) |
+| Clickjacking | PASS |
+| Open redirects | PASS |
+| Insecure file uploads | PASS after S1 |
+| API abuse / rate limits | PASS (some per instance, S7) |
+| Privilege escalation / mass assignment | PASS |
+| Sensitive information disclosure (bundle, errors, headers, files) | PASS |
+| Race conditions (link-limit lock, unique username, atomic limiter) | PASS (code review; lock tested in an earlier audit) |
+| Business logic (limits, reserved names, unique analytics) | PASS |
+| DoS vectors (body size, id length, per-user write limits) | PASS; volumetric DDoS is Vercel's layer: NOT TESTED |
+| Password hashing | Supabase Auth (bcrypt), not configurable: NOT TESTED by us |
+| Password policy | PASS after S3 (leaked-password API needs Pro) |
+| Secrets in git / browser bundle | PASS |
+| Dependencies | PASS for production; dev-only advisories accepted |
+| Backups | PARTIAL (manual export, S5) |
+| Supabase dashboard settings (redirect-URL allow-list, JWT expiry, refresh-token reuse window) | NOT TESTED: no Management API access |
+| OWASP ZAP crawl | NOT TESTED: tool unavailable |
+
+### OWASP Top 10 (2021)
+- **A01 Broken Access Control:** RLS, column grants, restrictive 2FA policies; IDOR and mass-assignment tests.
+- **A02 Cryptographic Failures:** TLS 1.2+, HSTS, Supabase-managed password hashing, HMAC-hashed limiter keys and visitor ids.
+- **A03 Injection:** parameterised API, DB check constraints, React escaping, nonce CSP.
+- **A04 Insecure Design:** per-user DB write limits, reserved names, CAPTCHA, re-auth for deletion.
+- **A05 Security Misconfiguration:** headers, no framework banner, image optimizer closed.
+- **A06 Vulnerable Components:** scanners above; patch updates (S6).
+- **A07 Identification & Authentication Failures:** limits, CAPTCHA, OTP, optional TOTP 2FA, password policy (S3), `__Host-` cookie (S2).
+- **A08 Software & Data Integrity:** lockfile, checksum-verified tools, migrations in git.
+- **A09 Logging & Monitoring:** audit log with retention (S4); no alerting yet.
+- **A10 SSRF:** avatar allow-list in app and DB; no other outbound fetches of user input.
+- **OWASP API Top 10:** API1/API3 object- and property-level authorization (IDOR, mass assignment), API2 authentication, API4 resource consumption (limits, body size), API5 function-level authorization (privileged RPCs revoked), API8 misconfiguration.
+
+### Limitations
+- No OWASP ZAP crawl (no Java/Docker). The custom suites test the attacks listed, not every possible input.
+- Supabase settings that need the dashboard or Management API (redirect-URL allow-list, JWT expiry, refresh-token rotation window) were not checked from here.
+- No load or DDoS testing (inappropriate against shared production services).
+- Tests ran against the production Supabase project with throwaway accounts, deleted afterwards (shared database, R10).
+
+---
+
 ## Remaining risks
 
 | # | Risk | Notes / mitigation |
