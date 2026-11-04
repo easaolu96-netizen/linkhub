@@ -2,6 +2,7 @@ import { AccountMenu } from "@/components/dashboard/account-menu";
 import { DashboardNav } from "@/components/dashboard/dashboard-nav";
 import { DashboardProvider } from "@/components/dashboard/dashboard-provider";
 import { DesktopPreview, MobilePreview } from "@/components/dashboard/live-preview";
+import { TabTransition } from "@/components/dashboard/tab-transition";
 import { ViewPageButton } from "@/components/dashboard/view-page-button";
 import { Logo } from "@/components/logo";
 import { getAuthUser } from "@/lib/auth";
@@ -32,7 +33,7 @@ export default async function DashboardLayout({ children }: LayoutProps<"/dashbo
 
         <div className="mx-auto grid w-full max-w-6xl flex-1 grid-cols-[minmax(0,1fr)] gap-16 px-5 pt-12 pb-28 sm:px-8 lg:grid-cols-[minmax(0,1fr)_300px] lg:pb-16 xl:grid-cols-[minmax(0,1fr)_320px] xl:gap-24">
           <main id="main" tabIndex={-1} className="min-w-0 max-w-2xl">
-            {children}
+            <TabTransition>{children}</TabTransition>
           </main>
           <DesktopPreview />
         </div>

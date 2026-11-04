@@ -11,21 +11,29 @@ import { getClientIp, getCountry, getReferrerOrigin, isBot, isPrefetch } from "@
 
 type Props = PageProps<"/[username]">;
 
-async function loadProfile(params: Props["params"]) {
+/** The profile for this URL, or null if there is none (redirects /Jane → /jane). */
+async function findProfile(params: Props["params"]) {
   const { username } = await params;
   const decoded = decodeURIComponent(username);
   const normalized = decoded.toLowerCase();
-  if (!/^[a-z0-9_-]{3,30}$/.test(normalized)) notFound();
+  if (!/^[a-z0-9_-]{3,30}$/.test(normalized)) return null;
   // /Jane → /jane (one canonical URL for SEO)
   if (decoded !== normalized) permanentRedirect(`/${normalized}`);
+  return getPublicProfile(normalized);
+}
 
-  const data = await getPublicProfile(normalized);
+async function loadProfile(params: Props["params"]) {
+  const data = await findProfile(params);
   if (!data) notFound();
   return data;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { profile } = await loadProfile(params);
+  // Unknown username: return the 404 title here instead of throwing notFound(),
+  // which would discard all metadata and leave the site's default title.
+  const data = await findProfile(params);
+  if (!data) return { title: "Page not found", robots: { index: false } };
+  const { profile } = data;
   const name = profile.display_name?.trim() || profile.username;
   const title = `${name} (@${profile.username})`;
   const description = profile.bio?.trim() || `Check out ${name}'s links on LinkHub.`;
@@ -40,8 +48,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export async function generateViewport({ params }: Props): Promise<Viewport> {
-  const { profile } = await loadProfile(params);
-  return { themeColor: profile.theme.background };
+  const data = await findProfile(params);
+  return data ? { themeColor: data.profile.theme.background } : {};
 }
 
 export default async function PublicProfilePage({ params }: Props) {
