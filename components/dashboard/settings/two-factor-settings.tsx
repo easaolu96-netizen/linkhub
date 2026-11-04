@@ -125,7 +125,7 @@ export function TwoFactorSettings({ enabled }: { enabled: boolean }) {
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <p className="text-sm text-muted-foreground">
-        Add a second step when logging in: a code from an authenticator app on your phone. Recommended.
+        When you log in, also ask for a 6-digit code from an authenticator app on your phone.
       </p>
       <Button variant="outline" className="shrink-0" onClick={onStart} disabled={isStarting}>
         {isStarting && <Spinner />}

@@ -24,7 +24,7 @@ function PreviewContent() {
 export function DesktopPreview() {
   return (
     <aside aria-label="Live preview" className="sticky top-36 hidden self-start lg:block">
-      <p className="mb-4 text-center text-xs font-medium tracking-[0.14em] text-muted-foreground uppercase">
+      <p className="mb-4 text-center text-sm text-muted-foreground">
         Live preview
       </p>
       <PhoneFrame className="w-full xl:w-full">

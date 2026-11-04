@@ -16,7 +16,7 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
       <div>
         <h1 className="font-display text-5xl leading-none tracking-[-0.01em]">Something went wrong</h1>
         <p className="mt-4 max-w-sm text-muted-foreground">
-          Sorry about that. Please try again — if it keeps happening, come back in a few minutes.
+          Sorry about that. Try again, and if it keeps happening, come back in a few minutes.
         </p>
         {error.digest && <p className="mt-2 text-xs text-muted-foreground">Reference: {error.digest}</p>}
       </div>

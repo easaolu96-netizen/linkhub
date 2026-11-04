@@ -43,11 +43,11 @@ const spaceMono = Space_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
   title: {
-    default: "LinkHub — One link for everything you are",
+    default: "LinkHub · One link for everything you make",
     template: "%s · LinkHub",
   },
   description:
-    "Create a beautiful link-in-bio page in minutes. Share all your links, socials and content from one simple URL.",
+    "A link-in-bio page with eight themes and honest click analytics. Free to use.",
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {

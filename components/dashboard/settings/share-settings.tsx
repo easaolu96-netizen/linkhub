@@ -59,7 +59,7 @@ export function ShareSettings({ siteUrl }: { siteUrl: string }) {
       toast.success("Link copied");
       setTimeout(() => setCopied(false), 2000);
     } else {
-      toast.error("Couldn't copy — select the link and copy it manually.");
+      toast.error("Couldn't copy. Select the link and copy it by hand.");
     }
   }
 

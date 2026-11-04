@@ -22,7 +22,7 @@ export default async function SignupPage({ searchParams }: PageProps<"/signup">)
             "Create your page"
           )}
         </h1>
-        <p className="mt-3 text-muted-foreground">It&apos;s free and takes about a minute.</p>
+        <p className="mt-3 text-muted-foreground">Free to use. You can change everything later.</p>
       </div>
       <AuthForm mode="signup" next={next} />
     </>

@@ -6,22 +6,16 @@ import { ClaimForm } from "@/components/landing/claim-form";
 import { DeletedNotice } from "@/components/landing/deleted-notice";
 import { HeroStage } from "@/components/landing/hero-stage";
 import { Reveal } from "@/components/landing/reveal";
+import { SiteHeader } from "@/components/landing/site-header";
 import { StepsSection } from "@/components/landing/steps-section";
 import { ThemeSwitcher } from "@/components/landing/theme-switcher";
 import { Logo } from "@/components/logo";
-import { Button } from "@/components/ui/button";
 import { SITE_URL } from "@/lib/env";
+import { LANDING_SECTIONS } from "@/lib/landing-sections";
 
 const HOST = new URL(SITE_URL).host;
 const container = "mx-auto w-full max-w-6xl px-5 sm:px-8";
-const eyebrow = "text-sm font-medium tracking-[0.14em] text-green uppercase";
-const sectionTitle = "font-display text-[2.6rem] leading-[1] tracking-[-0.02em] sm:text-6xl";
-
-const SECTIONS = [
-  { href: "#how", label: "How it works" },
-  { href: "#themes", label: "Themes" },
-  { href: "#analytics", label: "Analytics" },
-];
+const sectionTitle = "font-display text-[2.75rem] leading-[0.98] tracking-[-0.02em] sm:text-6xl";
 
 export const metadata: Metadata = { alternates: { canonical: "/" } };
 
@@ -44,25 +38,7 @@ export default function Home() {
         <DeletedNotice />
       </Suspense>
 
-      {/* Floats over the hero stage so the 3D scene can use the full screen. */}
-      <header className={`${container} absolute inset-x-0 top-0 z-20 flex h-20 items-center justify-between gap-6`}>
-        <Logo />
-        <nav aria-label="Sections" className="hidden items-center gap-7 text-[15px] text-ink-soft md:flex">
-          {SECTIONS.map((s) => (
-            <a key={s.href} href={s.href} className="rounded-sm transition-colors outline-none hover:text-ink focus-visible:ring-3 focus-visible:ring-ring/25">
-              {s.label}
-            </a>
-          ))}
-        </nav>
-        <nav aria-label="Account" className="flex items-center gap-1 sm:gap-2">
-          <Button asChild variant="ghost">
-            <Link href="/login">Log in</Link>
-          </Button>
-          <Button asChild>
-            <Link href="/signup">Get started</Link>
-          </Button>
-        </nav>
-      </header>
+      <SiteHeader />
 
       <main id="main" tabIndex={-1} className="flex-1">
         <HeroStage
@@ -80,7 +56,7 @@ export default function Home() {
                 </span>
               </h1>
               <p className="fade-up mt-5 max-w-md text-[17px] leading-relaxed text-ink-soft sm:mt-6 sm:text-lg" style={{ "--delay": "0.55s" } as React.CSSProperties}>
-                A calm, fast page for your bio. Add your links, choose a look, and see what people tap.
+                Put every link you share on one page, give it your look, and see which links people actually open.
               </p>
               <div className="fade-up mt-7 sm:mt-9" style={{ "--delay": "0.7s" } as React.CSSProperties}>
                 <ClaimForm host={HOST} />
@@ -89,12 +65,11 @@ export default function Home() {
           }
           story={
             <div className="max-w-md">
-              <p className={eyebrow}>From scattered to sorted</p>
-              <h2 className="mt-4 font-display text-[2.6rem] leading-[0.98] tracking-[-0.02em] sm:text-6xl">
-                Every link you share, in one calm place.
+              <h2 className="font-display text-[2.75rem] leading-[0.98] tracking-[-0.02em] sm:text-6xl">
+                Your shop, your work and your socials, on one page.
               </h2>
               <p className="mt-5 text-[17px] leading-relaxed text-ink-soft sm:text-lg">
-                Your shop, your work, your socials. One address in your bio, and everything lined up in the order you choose.
+                One address in your bio. Visitors see your links in the order you choose, and you can change them any time.
               </p>
             </div>
           }
@@ -102,33 +77,29 @@ export default function Home() {
 
         <StepsSection host={HOST} />
 
-        <section id="themes" aria-labelledby="themes-heading" className="scroll-mt-4 border-t bg-surface">
+        <section id="themes" aria-labelledby="themes-heading" className="scroll-mt-16 border-t bg-surface">
           <div className={`${container} py-24 lg:py-32`}>
             <Reveal>
               <ThemeSwitcher
                 heading={
-                  <>
-                    <p className={eyebrow}>Themes</p>
-                    <h2 id="themes-heading" className={`mt-4 max-w-xl ${sectionTitle}`}>
-                      Make it look like you. Try one.
-                    </h2>
-                  </>
+                  <h2 id="themes-heading" className={`max-w-xl ${sectionTitle}`}>
+                    Eight themes. Click one.
+                  </h2>
                 }
               />
             </Reveal>
           </div>
         </section>
 
-        <section id="analytics" aria-labelledby="analytics-heading" className="scroll-mt-4 border-t">
+        <section id="analytics" aria-labelledby="analytics-heading" className="scroll-mt-16 border-t">
           <div className={`${container} grid grid-cols-[minmax(0,1fr)] gap-14 py-24 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:items-center lg:gap-20 lg:py-32`}>
             <Reveal>
-              <p className={eyebrow}>Analytics</p>
-              <h2 id="analytics-heading" className={`mt-4 ${sectionTitle}`}>
+              <h2 id="analytics-heading" className={sectionTitle}>
                 See what people actually tap.
               </h2>
               <p className="mt-6 max-w-md text-[17px] leading-relaxed text-muted-foreground sm:text-lg">
                 Views, clicks and click-through rate for the last week or month. Each visitor counts once a day, and bots and
-                your own visits are left out, so the numbers mean something.
+                your own visits are left out.
               </p>
             </Reveal>
             <AnalyticsShowcase />
@@ -142,10 +113,10 @@ export default function Home() {
                 Your name is probably still <em className="text-[#9fd3b8]">free.</em>
               </h2>
               <p className="mt-6 max-w-md text-[17px] leading-relaxed text-paper/70 sm:text-lg">
-                Pick a name, add your first links and share your page today.
+                Check it now. If it&apos;s taken, try a variation with a dash or underscore.
               </p>
             </Reveal>
-            <Reveal delay={0.1} className="rounded-3xl bg-paper p-5 text-ink sm:p-7">
+            <Reveal delay={0.1} className="rounded-2xl bg-paper p-5 text-ink sm:p-6">
               <ClaimForm host={HOST} id="claim-end" />
             </Reveal>
           </div>
@@ -153,30 +124,25 @@ export default function Home() {
       </main>
 
       <footer className="border-t">
-        <div className={`${container} grid grid-cols-[minmax(0,1fr)] gap-10 py-14 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:gap-16`}>
-          <div>
+        <div className={`${container} flex flex-col gap-8 py-12 sm:flex-row sm:items-center sm:justify-between`}>
+          <div className="flex items-baseline gap-4">
             <Logo />
-            <p className="mt-3 max-w-xs text-sm leading-relaxed text-muted-foreground">One calm page for everything you make.</p>
+            <span className="text-sm text-muted-foreground">© {new Date().getFullYear()}</span>
           </div>
-          <nav aria-label="Footer: product" className="flex flex-col gap-2.5 text-sm">
-            <span className="font-medium">Product</span>
-            {SECTIONS.map((s) => (
-              <a key={s.href} href={s.href} className="text-muted-foreground hover:text-ink">
+          <nav aria-label="Footer" className="flex flex-wrap gap-x-7 gap-y-3 text-sm text-muted-foreground">
+            {LANDING_SECTIONS.map((s) => (
+              <a key={s.href} href={s.href} className="hover:text-ink">
                 {s.label}
               </a>
             ))}
-          </nav>
-          <nav aria-label="Footer: account" className="flex flex-col gap-2.5 text-sm">
-            <span className="font-medium">Account</span>
-            <Link href="/signup" className="text-muted-foreground hover:text-ink">
-              Sign up
-            </Link>
-            <Link href="/login" className="text-muted-foreground hover:text-ink">
+            <Link href="/login" className="hover:text-ink">
               Log in
+            </Link>
+            <Link href="/signup" className="hover:text-ink">
+              Sign up
             </Link>
           </nav>
         </div>
-        <div className={`${container} border-t py-6 text-sm text-muted-foreground`}>© {new Date().getFullYear()} LinkHub</div>
       </footer>
     </>
   );

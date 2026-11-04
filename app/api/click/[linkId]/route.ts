@@ -20,7 +20,7 @@ export async function GET(request: NextRequest, ctx: RouteContext<"/api/click/[l
 
   const ip = getClientIp(request.headers);
   if (!rateLimit(`clicks:${ip}`, 30, 60_000)) {
-    return new NextResponse("Too many requests — please slow down.", {
+    return new NextResponse("Too many requests. Please slow down.", {
       status: 429,
       headers: { ...NO_STORE, "Retry-After": "60" },
     });

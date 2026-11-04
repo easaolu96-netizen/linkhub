@@ -72,7 +72,7 @@ export function LinksEditor() {
         <div className="rounded-xl border border-dashed border-input px-6 py-14 text-center">
           <h2 className="font-display text-3xl">Add your first link</h2>
           <p className="mx-auto mt-2 max-w-xs text-sm text-muted-foreground">
-            Your website, socials, latest video — anything. You can reorder them any time.
+            Your website, shop, latest video, anything. You can reorder them any time.
           </p>
         </div>
       ) : (

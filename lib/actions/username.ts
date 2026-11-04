@@ -33,7 +33,7 @@ export async function checkUsernameAvailability(raw: unknown): Promise<UsernameA
 
   // Unauthenticated and called as people type: cheap per-IP cap against scraping.
   if (!rateLimit(`username-check:${getClientIp(await headers())}`, 90, 60_000)) {
-    return { status: "invalid", username, message: "Too many checks — wait a moment and try again" };
+    return { status: "invalid", username, message: "Too many checks. Wait a moment and try again." };
   }
 
   const supabase = await createClient();

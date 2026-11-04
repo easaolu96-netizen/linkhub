@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import { useUsernameAvailability } from "@/hooks/use-username-availability";
 import { normalizeUsernameInput, USERNAME_MAX } from "@/lib/validation/username";
@@ -56,7 +55,6 @@ export function ClaimForm({ host, id = "claim" }: { host: string; id?: string })
         >
           {submitting ? <Spinner /> : null}
           Claim your link
-          {!submitting && <ArrowRight className="size-4" aria-hidden />}
         </button>
       </div>
       <p
@@ -64,7 +62,7 @@ export function ClaimForm({ host, id = "claim" }: { host: string; id?: string })
         aria-live="polite"
         className={cn("mt-2.5 min-h-5 pl-1 text-sm text-muted-foreground", problem && "text-destructive")}
       >
-        {availability.status === "idle" && "Free to use. Takes about a minute."}
+        {availability.status === "idle" && "Free to use."}
         {availability.status === "checking" && "Checking…"}
         {availability.status === "available" && (
           <span className="text-green">

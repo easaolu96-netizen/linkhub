@@ -60,7 +60,7 @@ function CountUp({ value, format }: { value: number; format: (n: number) => stri
 export function AnalyticsShowcase() {
   const max = Math.max(...LINKS.map((l) => l.clicks));
   return (
-    <Reveal as="figure" className="rounded-3xl border bg-surface p-6 shadow-[0_40px_80px_-56px_rgba(27,26,23,0.5)] sm:p-9">
+    <Reveal as="figure" className="rounded-2xl border bg-surface p-6 sm:p-8">
       <figcaption className="flex items-baseline justify-between gap-4 text-sm">
         <span className="font-medium">Last 30 days</span>
         <span className="text-muted-foreground">Example data</span>

@@ -73,8 +73,7 @@ export function ThemeSwitcher({ heading }: { heading: React.ReactNode }) {
           })}
         </div>
         <p className="mt-6 max-w-md text-[17px] leading-relaxed text-muted-foreground">
-          Every preset is a starting point. In your dashboard you can change the background, text, buttons and font, with a
-          warning if the contrast gets too low to read.
+          Start from one, then change any colour, button or font. If text gets hard to read, the editor tells you.
         </p>
       </div>
 

@@ -1,20 +1,21 @@
-import { Check } from "lucide-react";
 import { Logo } from "@/components/logo";
+import { PhoneFrame } from "@/components/profile/phone-frame";
+import { ProfileView } from "@/components/profile/profile-view";
+import { presetTheme } from "@/lib/theme";
+import type { ProfileData, ProfileLink } from "@/lib/types";
 
-const BENEFITS = ["Free to start, ready in a minute", "A live preview as you edit", "Analytics without the noise"];
-
-/** Three interlocked links: a static echo of the landing page's 3D hero. */
-function ChainMotif() {
-  return (
-    <svg viewBox="0 0 320 150" className="h-auto w-full max-w-[19rem]" aria-hidden>
-      <g fill="none" strokeWidth="15" strokeLinecap="round">
-        <rect x="14" y="44" width="118" height="64" rx="32" transform="rotate(-14 73 76)" stroke="var(--paper)" />
-        <rect x="102" y="40" width="118" height="64" rx="32" transform="rotate(9 161 72)" stroke="#9fd3b8" />
-        <rect x="190" y="46" width="118" height="64" rx="32" transform="rotate(-7 249 78)" stroke="var(--paper)" strokeOpacity="0.45" />
-      </g>
-    </svg>
-  );
-}
+const EXAMPLE: ProfileData = {
+  id: "example",
+  username: "amara",
+  display_name: "Amara Okafor",
+  bio: "Ceramic artist in Lagos. Small-batch pieces and workshops.",
+  avatar_url: null,
+  theme: presetTheme("forest"),
+  socials: { instagram: "https://instagram.com/x", tiktok: "https://www.tiktok.com/@x", email: "mailto:hello@example.com" },
+};
+const EXAMPLE_LINKS: ProfileLink[] = ["Shop the autumn collection", "Book a wheel-throwing class", "Studio journal"].map(
+  (title, i) => ({ id: String(i), title, url: "https://example.com" }),
+);
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -29,26 +30,16 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           <div className="w-full max-w-[400px]">{children}</div>
         </main>
 
-        {/* Brand panel: wide screens only, decorative and informational. */}
+        {/* Wide screens only: an example page, so new visitors see what they get. */}
         <aside
-          aria-label="About LinkHub"
-          className="fade-up sticky top-8 hidden flex-col justify-between gap-12 rounded-3xl bg-ink p-10 text-paper lg:flex lg:min-h-[34rem]"
+          aria-label="Example LinkHub page"
+          className="fade-up sticky top-8 hidden flex-col items-center gap-6 rounded-2xl bg-ink px-10 pt-12 pb-10 lg:flex"
           style={{ "--delay": "0.2s" } as React.CSSProperties}
         >
-          <ChainMotif />
-          <div>
-            <p className="font-display text-5xl leading-[0.98] tracking-[-0.02em]">
-              One calm page for everything you <em className="text-[#9fd3b8]">make.</em>
-            </p>
-            <ul className="mt-8 flex flex-col gap-3 text-[15px] text-paper/80">
-              {BENEFITS.map((benefit) => (
-                <li key={benefit} className="flex items-center gap-2.5">
-                  <Check className="size-4 shrink-0 text-[#9fd3b8]" aria-hidden />
-                  {benefit}
-                </li>
-              ))}
-            </ul>
-          </div>
+          <PhoneFrame className="w-[260px] border-zinc-800 shadow-none" scrollable={false} label="Example page">
+            <ProfileView profile={EXAMPLE} links={EXAMPLE_LINKS} mode="preview" showFooter={false} />
+          </PhoneFrame>
+          <p className="text-sm text-paper/60">An example page, as visitors see it.</p>
         </aside>
       </div>
     </div>

@@ -25,7 +25,7 @@ export default function NotFound() {
       </header>
       <main id="main" tabIndex={-1} className="mx-auto flex w-full max-w-6xl flex-1 flex-col justify-center px-5 pb-24 sm:px-8">
         <BrokenLink />
-        <p className="mt-10 text-sm font-medium tracking-[0.14em] text-green uppercase">Error 404</p>
+        <p className="mt-10 text-sm text-muted-foreground">404</p>
         <h1 className="mt-3 max-w-2xl font-display text-5xl leading-[1.02] tracking-[-0.02em] sm:text-7xl">
           This link has come loose.
         </h1>

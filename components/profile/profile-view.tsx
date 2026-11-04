@@ -118,7 +118,7 @@ export function ProfileView({
         {socialEntries.length > 0 && (
           <ul className="mt-5 flex flex-wrap items-center justify-center gap-1" aria-label="Social profiles">
             {socialEntries.map(([key, url]) => {
-              const label = `${SOCIAL_PLATFORMS[key].label}${key === "email" ? "" : ` — ${name}`}`;
+              const label = key === "email" ? SOCIAL_PLATFORMS[key].label : `${name} on ${SOCIAL_PLATFORMS[key].label}`;
               return (
                 <li key={key}>
                   {isPublic ? (

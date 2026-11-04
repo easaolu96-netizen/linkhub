@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 import { displayFonts } from "@/lib/og-fonts";
 
-export const alt = "LinkHub — one link for everything you make";
+export const alt = "LinkHub: one link for everything you make";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 

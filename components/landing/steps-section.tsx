@@ -6,16 +6,16 @@ import { cn } from "@/lib/utils";
 
 const STEPS = [
   {
-    title: "Claim your name",
-    body: "Pick a short username. Your page lives at one clean address you can put anywhere.",
+    title: "Pick a username",
+    body: "It becomes your page address. Short and easy to say works best.",
   },
   {
-    title: "Add what matters",
+    title: "Add your links",
     body: "Paste your links, drag them into order and hide the ones that are out of season. Every change shows in a live preview.",
   },
   {
-    title: "Share and learn",
-    body: "Put the link in your bio. See how many people visit, what they tap and where they come from.",
+    title: "Share it",
+    body: "Put the address in your bio. Then see how many people visit, what they open and where they came from.",
   },
 ] as const;
 
@@ -105,13 +105,15 @@ export function StepsSection({ host }: { host: string }) {
   const sketches = [<ClaimSketch key="c" host={host} />, <LinksSketch key="l" />, <ShareSketch key="s" host={host} />];
 
   return (
-    <section id="how" aria-labelledby="steps-heading" className="scroll-mt-4 border-t">
+    <section id="how" aria-labelledby="steps-heading" className="scroll-mt-16 border-t">
       <div className="mx-auto grid w-full max-w-6xl grid-cols-[minmax(0,1fr)] gap-10 px-5 py-20 sm:px-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-16 lg:py-0">
         <div className="lg:sticky lg:top-0 lg:flex lg:h-svh lg:flex-col lg:justify-center">
-          <p className="text-sm font-medium tracking-[0.14em] text-green uppercase">How it works</p>
-          <h2 id="steps-heading" className="mt-4 max-w-md font-display text-[2.6rem] leading-[1] tracking-[-0.02em] sm:text-6xl">
-            From sign-up to shareable in three steps.
+          <h2 id="steps-heading" className="max-w-md font-display text-[2.75rem] leading-[0.98] tracking-[-0.02em] sm:text-6xl">
+            How it works
           </h2>
+          <p className="mt-5 max-w-sm text-[17px] leading-relaxed text-muted-foreground">
+            Sign up, add your links, put the address in your bio.
+          </p>
           <div className="mt-12 hidden items-end gap-6 lg:flex" aria-hidden>
             <span className="relative block h-[9rem] w-[11rem] overflow-hidden font-display text-[9rem] leading-none text-green">
               {STEPS.map((_, i) => (
