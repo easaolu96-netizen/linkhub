@@ -24,9 +24,9 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       </header>
       <div className="mx-auto grid w-full max-w-6xl flex-1 grid-cols-[minmax(0,1fr)] gap-16 px-5 pt-6 pb-20 sm:px-8 sm:pt-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-start lg:gap-20">
         <main id="main" tabIndex={-1} className="flex justify-center lg:justify-start">
-          <div className="fade-up w-full max-w-[400px]" style={{ "--delay": "0.05s" } as React.CSSProperties}>
-            {children}
-          </div>
+          {/* No entrance animation here: the form must be usable (and count as
+              painted) immediately. Only the decorative panel fades in. */}
+          <div className="w-full max-w-[400px]">{children}</div>
         </main>
 
         {/* Brand panel: wide screens only, decorative and informational. */}
