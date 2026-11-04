@@ -157,3 +157,46 @@
 main:focus {
   outline: none;
 }
+
+/* Landing headline: words rise into place once, on first paint. Pure CSS, so
+   the text is in the server HTML (good for LCP/SEO) and needs no JavaScript. */
+@keyframes rise-in {
+  from {
+    transform: translateY(105%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.rise-word {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: top;
+  padding-bottom: 0.12em; /* room for descenders inside the mask */
+  margin-bottom: -0.12em;
+}
+.rise-word > span {
+  display: inline-block;
+  animation: rise-in 0.9s cubic-bezier(0.2, 0.7, 0.1, 1) both;
+  animation-delay: calc(0.12s + var(--i, 0) * 0.07s);
+}
+.fade-up {
+  animation: fade-up 0.8s cubic-bezier(0.2, 0.7, 0.1, 1) both;
+  animation-delay: var(--delay, 0.6s);
+}
+@media (prefers-reduced-motion: reduce) {
+  .rise-word > span,
+  .fade-up {
+    animation: none;
+  }
+}

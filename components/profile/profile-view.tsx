@@ -51,14 +51,19 @@ export function ProfileView({
   profile,
   links,
   mode,
+  showFooter = true,
 }: {
   profile: ProfileData;
   links: ProfileLink[];
   mode: Mode;
+  /** Off for fixed-height demo frames, where the footer would be cut off. */
+  showFooter?: boolean;
 }) {
   const { theme } = profile;
   const name = profile.display_name?.trim() || `@${profile.username}`;
   const isPublic = mode === "public";
+  // Only the real page owns the page's <h1>; previews sit inside other pages.
+  const NameTag = isPublic ? "h1" : "p";
   const socialEntries = SOCIAL_KEYS.flatMap((key): [SocialKey, string][] => {
     const url = profile.socials[key];
     return url && isSafeHref(url) ? [[key, url]] : [];
@@ -103,7 +108,7 @@ export function ProfileView({
           </div>
         )}
 
-        <h1 className="mt-4 text-center text-xl font-bold break-words">{name}</h1>
+        <NameTag className="mt-4 text-center text-xl font-bold break-words">{name}</NameTag>
         {profile.bio && (
           <p className="mt-2 max-w-md text-center text-[15px] leading-relaxed whitespace-pre-line break-words opacity-85">
             {profile.bio}
@@ -161,15 +166,17 @@ export function ProfileView({
         </ul>
       </div>
 
-      <footer className="mt-12 text-xs font-medium opacity-70">
-        {isPublic ? (
-          <Link href="/" className="underline-offset-4 hover:underline">
-            Made with LinkHub
-          </Link>
-        ) : (
-          <span>Made with LinkHub</span>
-        )}
-      </footer>
+      {showFooter && (
+        <footer className="mt-12 text-xs font-medium opacity-70">
+          {isPublic ? (
+            <Link href="/" className="underline-offset-4 hover:underline">
+              Made with LinkHub
+            </Link>
+          ) : (
+            <span>Made with LinkHub</span>
+          )}
+        </footer>
+      )}
     </div>
   );
 }

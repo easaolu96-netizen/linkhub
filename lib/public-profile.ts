@@ -12,29 +12,24 @@ import type { ProfileData, ProfileLink } from "@/lib/types";
  */
 export const getPublicProfile = cache(
   async (username: string): Promise<{ profile: ProfileData; links: ProfileLink[] } | null> => {
-    const supabase = createPublicClient();
-    const { data: row, error } = await supabase
+    // One round trip: the profile with its visible links embedded (PostgREST
+    // follows the links.user_id foreign key; RLS still applies to both).
+    const { data: row, error } = await createPublicClient()
       .from("profiles")
-      .select("id, username, display_name, bio, avatar_url, theme, socials")
+      .select("id, username, display_name, bio, avatar_url, theme, socials, links(id, title, url)")
       .eq("username", username)
+      .eq("links.is_visible", true)
+      .order("position", { referencedTable: "links", ascending: true })
+      .order("created_at", { referencedTable: "links", ascending: false })
       .maybeSingle();
 
     if (error) throw new Error(`Failed to load profile: ${error.message}`);
     if (!row?.username) return null;
-
-    const { data: links, error: linksError } = await supabase
-      .from("links")
-      .select("id, title, url")
-      .eq("user_id", row.id)
-      .eq("is_visible", true)
-      .order("position", { ascending: true })
-      .order("created_at", { ascending: false });
-
-    if (linksError) throw new Error(`Failed to load links: ${linksError.message}`);
+    const { links, ...profile } = row;
 
     return {
       profile: {
-        ...row,
+        ...profile,
         username: row.username,
         avatar_url: safeAvatarUrl(row.avatar_url, row.id),
         theme: parseTheme(row.theme),

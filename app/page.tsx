@@ -1,8 +1,10 @@
-import { Suspense } from "react";
+import { Fragment, Suspense } from "react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { LinkClicks } from "@/components/dashboard/analytics/link-clicks";
 import { ClaimForm } from "@/components/landing/claim-form";
 import { DeletedNotice } from "@/components/landing/deleted-notice";
+import { HeroStage } from "@/components/landing/hero-stage";
 import { Logo } from "@/components/logo";
 import { PhoneFrame } from "@/components/profile/phone-frame";
 import { ProfileView } from "@/components/profile/profile-view";
@@ -25,21 +27,6 @@ function demoProfile(
 
 const links = (...titles: string[]): ProfileLink[] =>
   titles.map((title, i) => ({ id: String(i), title, url: "https://example.com" }));
-
-const HERO = {
-  profile: demoProfile(
-    "amaraokafor",
-    "Amara Okafor",
-    "Ceramic artist in Lagos. Small-batch pieces and workshops.",
-    "forest",
-    {
-      instagram: "https://instagram.com/x",
-      tiktok: "https://www.tiktok.com/@x",
-      email: "mailto:hello@example.com",
-    },
-  ),
-  links: links("Shop the autumn collection", "Book a wheel-throwing class", "Studio journal", "Commissions"),
-};
 
 const THEME_SAMPLES = [
   { profile: demoProfile("tunde", "Tunde Bakare", "Producer. New EP out Friday.", "bold"), links: links("Listen on Spotify", "Tour dates", "Merch") },
@@ -72,6 +59,20 @@ const DEMO_STATS = [
 
 const container = "mx-auto w-full max-w-6xl px-5 sm:px-8";
 
+export const metadata: Metadata = { alternates: { canonical: "/" } };
+
+/** Headline words, each revealed from a mask (see .rise-word in globals.css). */
+function RiseWords({ text, offset = 0 }: { text: string; offset?: number }) {
+  // The space sits between the masks: inside an inline-block it would collapse.
+  return text.split(" ").map((word, i) => (
+    <Fragment key={i}>
+      <span className="rise-word">
+        <span style={{ "--i": i + offset } as React.CSSProperties}>{word}</span>
+      </span>{" "}
+    </Fragment>
+  ));
+}
+
 export default function Home() {
   return (
     <>
@@ -79,7 +80,8 @@ export default function Home() {
         <DeletedNotice />
       </Suspense>
 
-      <header className={`${container} flex h-20 items-center justify-between`}>
+      {/* Floats over the hero stage so the 3D scene can use the full screen. */}
+      <header className={`${container} absolute inset-x-0 top-0 z-20 flex h-20 items-center justify-between`}>
         <Logo />
         <nav aria-label="Account" className="flex items-center gap-1 sm:gap-2">
           <Button asChild variant="ghost">
@@ -92,26 +94,40 @@ export default function Home() {
       </header>
 
       <main id="main" tabIndex={-1} className="flex-1">
-        {/* Hero */}
-        <section className={`${container} grid grid-cols-[minmax(0,1fr)] items-center gap-14 pt-10 pb-24 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)] lg:gap-10 lg:pt-16 lg:pb-32`}>
-          <div>
-            <h1 className="font-display text-[3.25rem] leading-[0.95] tracking-[-0.02em] text-balance sm:text-7xl lg:text-[5.5rem]">
-              One link for everything you <em className="text-green">make</em>.
-            </h1>
-            <p className="mt-6 max-w-md text-lg leading-relaxed text-ink-soft">
-              A calm, fast page for your bio. Add your links, choose a look, and see what people tap.
-            </p>
-            <div className="mt-9">
-              <ClaimForm host={HOST} />
+        <HeroStage
+          intro={
+            <div className="max-w-xl">
+              <h1
+                id="hero-heading"
+                className="font-display text-[3.1rem] leading-[0.92] tracking-[-0.025em] text-balance sm:text-7xl lg:text-[6.25rem]"
+              >
+                <RiseWords text="One link for everything you" />
+                <span className="rise-word">
+                  <em className="text-green" style={{ "--i": 5 } as React.CSSProperties}>
+                    make.
+                  </em>
+                </span>
+              </h1>
+              <p className="fade-up mt-5 max-w-md text-[17px] leading-relaxed text-ink-soft sm:mt-6 sm:text-lg" style={{ "--delay": "0.55s" } as React.CSSProperties}>
+                A calm, fast page for your bio. Add your links, choose a look, and see what people tap.
+              </p>
+              <div className="fade-up mt-7 sm:mt-9" style={{ "--delay": "0.7s" } as React.CSSProperties}>
+                <ClaimForm host={HOST} />
+              </div>
             </div>
-          </div>
-
-          <div className="flex justify-center lg:justify-end" role="img" aria-label="An example LinkHub page">
-            <PhoneFrame className="w-[270px] shadow-[0_30px_60px_-30px_rgba(27,26,23,0.45)] sm:w-[290px]" scrollable={false}>
-              <ProfileView profile={HERO.profile} links={HERO.links} mode="preview" />
-            </PhoneFrame>
-          </div>
-        </section>
+          }
+          story={
+            <div className="max-w-md">
+              <p className="text-sm font-medium tracking-[0.14em] text-green uppercase">From scattered to sorted</p>
+              <h2 className="mt-4 font-display text-[2.6rem] leading-[0.98] tracking-[-0.02em] sm:text-6xl">
+                Every link you share, in one calm place.
+              </h2>
+              <p className="mt-5 text-[17px] leading-relaxed text-ink-soft sm:text-lg">
+                Your shop, your work, your socials. One address in your bio, and everything lined up in the order you choose.
+              </p>
+            </div>
+          }
+        />
 
         {/* How it works */}
         <section aria-labelledby="steps-heading" className="border-t">
